@@ -1,0 +1,16 @@
+<!-- src/main/resources/templates/error.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Ha ocurrido un error</h2>
+    <p th:text="${message} ?: 'Página no encontrada o error inesperado.'"></p>
+    <a href="/" class="btn btn-primary">Ir al inicio</a>
+</div>
+</body>
+</html>
