@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferencia Interbancaria - Bank Service</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+<div class="container mt-5">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/accounts}">Mis Cuentas</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{'/accounts/' + ${account.id}}">Cuenta <span th:text="${account.accountNumber}"></span></a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Transferencia Interbancaria
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-bank"></i>
+                    Transferencia Interbancaria
+                </h4>
+                <a th:href="@{'/accounts/' + ${account.id}}" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Cuenta Origen</h5>
+                    <p><strong>Número:</strong> <span th:text="${account.accountNumber}"></span></p>
+                    <p><strong>Propietario:</strong> <span th:text="${username}"></span></p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Saldo Disponible</h5>
+                    <h3 class="text-success">
+                        $<span th:text="${#numbers.formatDecimal(account.balance,1,2)}"></span>
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Formulario de transferencia interbancaria -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Datos de la Transferencia Interbancaria</h5>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/transactions/interbank}" method="post">
+                <input type="hidden" name="fromAccountId" th:value="${account.id}">
+                
+                <!-- Información del banco destino -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="bankCode" class="form-label">
+                            <i class="bi bi-building"></i> Banco Destino *
+                        </label>
+                        <select class="form-select" id="bankCode" name="bankCode" required>
+                            <option value="">Selecciona un banco</option>
+                            <option value="BBVA">BBVA Bancomer</option>
+                            <option value="BANAMEX">Citibanamex</option>
+                            <option value="SANTANDER">Banco Santander</option>
+                            <option value="BANORTE">Banorte</option>
+                            <option value="HSBC">HSBC México</option>
+                            <option value="SCOTIABANK">Scotiabank</option>
+                            <option value="INBURSA">Banco Inbursa</option>
+                            <option value="AZTECA">Banco Azteca</option>
+                            <option value="AFIRME">Banco Afirme</option>
+                            <option value="BAJIO">BanBajío</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="accountNumber" class="form-label">
+                            <i class="bi bi-credit-card"></i> Número de Cuenta Destino *
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="accountNumber" 
+                               name="accountNumber" 
+                               placeholder="1234567890123456"
+                               pattern="[0-9]{10,18}"
+                               title="Ingresa un número de cuenta válido (10-18 dígitos)"
+                               required>
+                        <div class="form-text">
+                            Número de cuenta del banco destino
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Referencia del destinatario con datos reales del sistema -->
+                <div class="mb-3">
+                    <label for="beneficiaryName" class="form-label">
+                        <i class="bi bi-person"></i> Nombre del Beneficiario *
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="beneficiaryName" 
+                           name="beneficiaryName" 
+                           placeholder="Nombre completo del titular de la cuenta destino"
+                           required>
+                    <div class="form-text">
+                        Ingrese el nombre completo del titular de la cuenta destino
+                    </div>
+                </div>
+
+                <!-- Documento del beneficiario -->
+                <div class="mb-3">
+                    <label for="beneficiaryDocument" class="form-label">
+                        <i class="bi bi-card-text"></i> Documento de Identidad del Beneficiario *
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="beneficiaryDocument" 
+                           name="beneficiaryDocument" 
+                           placeholder="RFC, CURP o Identificación del beneficiario"
+                           required>
+                    <div class="form-text">
+                        Documento de identidad del titular de la cuenta destino
+                    </div>
+                </div>
+
+                <!-- Monto y descripción -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="amount" class="form-label">
+                            <i class="bi bi-currency-dollar"></i> Monto a Transferir *
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="amount" 
+                                   name="amount" 
+                                   step="0.01" 
+                                   min="0.01" 
+                                   placeholder="0.00" 
+                                   required
+                                   onchange="calculateFee()">
+                        </div>
+                        <div class="form-text">
+                            Comisión interbancaria: 0.5% del monto
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Resumen de Costos</label>
+                        <div class="card bg-light">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Monto a transferir:</span>
+                                    <span id="transferAmount">$0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Comisión interbancaria:</span>
+                                    <span id="feeAmount">$0.00</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total a debitar:</span>
+                                    <span id="totalAmount">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">
+                        <i class="bi bi-chat-left-text"></i> Concepto/Referencia
+                    </label>
+                    <textarea class="form-control" 
+                              id="description" 
+                              name="description" 
+                              rows="3" 
+                              placeholder="Describe el motivo de la transferencia"></textarea>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a th:href="@{'/accounts/' + ${account.id}}" class="btn btn-secondary me-md-2">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Realizar Transferencia Interbancaria
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Información importante -->
+    <div class="mt-4">
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i>
+            <strong>¿Cómo funciona la transferencia interbancaria?</strong>
+            <ul class="mb-0 mt-2">
+                <li><strong>Comisión:</strong> Se cobra automáticamente 0.5% del monto transferido</li>
+                <li><strong>Simulación:</strong> Esta es una transferencia simulada - en la realidad se procesaría con el banco destino</li>
+                <li><strong>Datos requeridos:</strong> Solo necesitas el banco destino y número de cuenta</li>
+                <li><strong>Referencia:</strong> El campo de referencia es opcional y solo para tu control personal</li>
+                <li><strong>Seguridad:</strong> Los fondos se debitan inmediatamente de tu cuenta origen</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function calculateFee() {
+    const amountInput = document.getElementById('amount');
+    const amount = parseFloat(amountInput.value) || 0;
+    const fee = amount * 0.005; // 0.5%
+    const total = amount + fee;
+    
+    document.getElementById('transferAmount').textContent = '$' + amount.toFixed(2);
+    document.getElementById('feeAmount').textContent = '$' + fee.toFixed(2);
+    document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
+    
+    // Verificar si hay suficiente saldo
+    const availableBalance = parseFloat('[[${account.balance}]]');
+    if (total > availableBalance) {
+        amountInput.setCustomValidity('Saldo insuficiente para cubrir el monto y la comisión');
+        document.getElementById('totalAmount').className = 'text-danger fw-bold';
+    } else {
+        amountInput.setCustomValidity('');
+        document.getElementById('totalAmount').className = 'fw-bold';
+    }
+}
+
+// Validación adicional del formulario
+document.querySelector('form').addEventListener('submit', function(e) {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const fee = amount * 0.005;
+    const total = amount + fee;
+    const availableBalance = parseFloat('[[${account.balance}]]');
+    
+    if (total > availableBalance) {
+        e.preventDefault();
+        alert('Saldo insuficiente para realizar la transferencia incluyendo la comisión.');
+    }
+});
+</script>
+</body>
+</html>

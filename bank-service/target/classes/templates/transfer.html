@@ -77,15 +77,18 @@
                 
                 <div class="mb-3">
                     <label for="toAccountId" class="form-label">
-                        <i class="bi bi-bank"></i> Cuenta Destino
+                        <i class="bi bi-bank"></i> Cuenta Destino (Mismo Banco)
                     </label>
                     <select class="form-select" id="toAccountId" name="toAccountId" required>
                         <option value="">Selecciona una cuenta destino</option>
                         <option th:each="destAccount : ${destinationAccounts}" 
                                 th:value="${destAccount.id}" 
-                                th:text="${destAccount.accountNumber + ' - Usuario ID: ' + destAccount.userId}">
+                                th:text="${destAccount.accountNumber + ' - ' + (destAccount.ownerName != null ? destAccount.ownerName : 'Usuario ID: ' + destAccount.userId)}">
                         </option>
                     </select>
+                    <div class="form-text">
+                        Solo se muestran cuentas del mismo banco (<span th:text="${account.bankName}"></span>)
+                    </div>
                 </div>
 
                 <div class="mb-3">

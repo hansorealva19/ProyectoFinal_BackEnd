@@ -20,7 +20,16 @@ public class Account {
     private String accountNumber;
 
     @Column(nullable = false)
-    private BigDecimal balance;
+    @Builder.Default
+    private BigDecimal balance = BigDecimal.ZERO;
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private String bankCode = "MIBANK"; // Código del banco por defecto
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private String bankName = "Mi Banco"; // Nombre del banco por defecto
 
     @ManyToOne
     @JoinColumn(name = "user_id")

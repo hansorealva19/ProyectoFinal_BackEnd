@@ -52,19 +52,31 @@
     
     <!-- Acciones rápidas -->
     <div class="row mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-body text-center">
                     <i class="bi bi-arrow-right-circle text-primary" style="font-size: 2rem;"></i>
-                    <h5 class="card-title mt-2">Transferir Dinero</h5>
-                    <p class="card-text">Envía dinero a otra cuenta</p>
+                    <h5 class="card-title mt-2">Transferir</h5>
+                    <p class="card-text">Envía dinero a cuentas del mismo banco</p>
                     <a th:href="@{'/transactions/new?accountId=' + ${account.id}}" class="btn btn-primary">
                         Transferir
                     </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-bank text-warning" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">Interbancaria</h5>
+                    <p class="card-text">Envía dinero a otros bancos</p>
+                    <a th:href="@{'/transactions/interbank?accountId=' + ${account.id}}" class="btn btn-warning">
+                        Transferir
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-body text-center">
                     <i class="bi bi-list-ul text-info" style="font-size: 2rem;"></i>
@@ -106,9 +118,10 @@
                             <td th:text="${#temporals.format(transaction.date, 'dd/MM/yyyy HH:mm')}"></td>
                             <td>
                                 <span th:if="${transaction.toAccountId == account.id}">Recibido de cuenta: </span>
-                                <span th:if="${transaction.fromAccountId == account.id}">Enviado a cuenta: </span>
+                                <span th:if="${transaction.fromAccountId == account.id and transaction.toAccountId != null}">Enviado a cuenta: </span>
+                                <span th:if="${transaction.fromAccountId == account.id and transaction.toAccountId == null}">Transferencia Interbancaria</span>
                                 <span th:if="${transaction.toAccountId == account.id}" th:text="${transaction.fromAccountId}"></span>
-                                <span th:if="${transaction.fromAccountId == account.id}" th:text="${transaction.toAccountId}"></span>
+                                <span th:if="${transaction.fromAccountId == account.id and transaction.toAccountId != null}" th:text="${transaction.toAccountId}"></span>
                                 <br>
                                 <small class="text-muted" th:text="${transaction.description}"></small>
                             </td>

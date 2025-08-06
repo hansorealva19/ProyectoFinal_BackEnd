@@ -25,28 +25,51 @@ public class TransactionServiceImpl implements TransactionService {
     public void transfer(TransactionDTO dto) {
         Account from = accountRepository.findById(dto.getFromAccountId())
                 .orElseThrow(() -> new RuntimeException("Cuenta origen no encontrada"));
-        Account to = accountRepository.findById(dto.getToAccountId())
-                .orElseThrow(() -> new RuntimeException("Cuenta destino no encontrada"));
 
-        if (from.getBalance().compareTo(dto.getAmount()) < 0) {
-            throw new RuntimeException("Saldo insuficiente");
+        // Si toAccountId es null, es una transferencia interbancaria
+        if (dto.getToAccountId() == null) {
+            // Transferencia interbancaria - solo débito
+            if (from.getBalance().compareTo(dto.getAmount()) < 0) {
+                throw new RuntimeException("Saldo insuficiente");
+            }
+
+            from.setBalance(from.getBalance().subtract(dto.getAmount()));
+            accountRepository.save(from);
+
+            Transaction transaction = Transaction.builder()
+                    .fromAccount(from)
+                    .toAccount(null) // No hay cuenta destino para transferencia interbancaria
+                    .amount(dto.getAmount())
+                    .description(dto.getDescription())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            transactionRepository.save(transaction);
+        } else {
+            // Transferencia normal entre cuentas del mismo banco
+            Account to = accountRepository.findById(dto.getToAccountId())
+                    .orElseThrow(() -> new RuntimeException("Cuenta destino no encontrada"));
+
+            if (from.getBalance().compareTo(dto.getAmount()) < 0) {
+                throw new RuntimeException("Saldo insuficiente");
+            }
+
+            from.setBalance(from.getBalance().subtract(dto.getAmount()));
+            to.setBalance(to.getBalance().add(dto.getAmount()));
+
+            accountRepository.save(from);
+            accountRepository.save(to);
+
+            Transaction transaction = Transaction.builder()
+                    .fromAccount(from)
+                    .toAccount(to)
+                    .amount(dto.getAmount())
+                    .description(dto.getDescription())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            transactionRepository.save(transaction);
         }
-
-        from.setBalance(from.getBalance().subtract(dto.getAmount()));
-        to.setBalance(to.getBalance().add(dto.getAmount()));
-
-        accountRepository.save(from);
-        accountRepository.save(to);
-
-        Transaction transaction = Transaction.builder()
-                .fromAccount(from)
-                .toAccount(to)
-                .amount(dto.getAmount())
-                .description(dto.getDescription())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        transactionRepository.save(transaction);
     }
 
     @Override
@@ -69,14 +92,19 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<TransactionDTO> getTransactionsByAccountId(Long accountId) {
         List<Transaction> transactions = transactionRepository.findByAccountId(accountId);
+        System.out.println("DEBUG: Found " + transactions.size() + " transactions for account " + accountId);
         return transactions.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     private TransactionDTO convertToDTO(Transaction transaction) {
+        System.out.println("DEBUG: Converting transaction " + transaction.getId() + 
+                          " - fromAccount: " + (transaction.getFromAccount() != null ? transaction.getFromAccount().getId() : "null") +
+                          " - toAccount: " + (transaction.getToAccount() != null ? transaction.getToAccount().getId() : "null"));
+        
         return TransactionDTO.builder()
                 .id(transaction.getId())
                 .fromAccountId(transaction.getFromAccount().getId())
-                .toAccountId(transaction.getToAccount().getId())
+                .toAccountId(transaction.getToAccount() != null ? transaction.getToAccount().getId() : null)
                 .amount(transaction.getAmount())
                 .description(transaction.getDescription())
                 .date(transaction.getTimestamp())

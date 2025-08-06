@@ -24,14 +24,10 @@ public class WebAuthController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestParam String username,
-                           @RequestParam String password,
+    public String register(@ModelAttribute RegisterRequest request,
                            Model model) {
         try {
-            RegisterRequest req = new RegisterRequest();
-            req.setUsername(username);
-            req.setPassword(password);
-            authService.register(req);
+            authService.register(request);
             return "redirect:/login?registered";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());

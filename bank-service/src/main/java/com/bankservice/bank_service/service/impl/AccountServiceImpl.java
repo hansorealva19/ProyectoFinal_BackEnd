@@ -38,6 +38,8 @@ public class AccountServiceImpl implements AccountService {
         Account account = Account.builder()
                 .accountNumber(accountNumber)
                 .balance(dto.getBalance() != null ? dto.getBalance() : BigDecimal.ZERO)
+                .bankCode("MIBANK") // Establecer explícitamente
+                .bankName("Mi Banco") // Establecer explícitamente
                 .user(user)
                 .build();
 
@@ -68,12 +70,35 @@ public class AccountServiceImpl implements AccountService {
         return convertToDTO(account);
     }
 
+    @Override
+    public AccountDTO updateBankInfo(Long accountId, String bankCode, String bankName) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Cuenta no encontrada"));
+        
+        account.setBankCode(bankCode);
+        account.setBankName(bankName);
+        
+        Account saved = accountRepository.save(account);
+        return convertToDTO(saved);
+    }
+
     private AccountDTO convertToDTO(Account account) {
         AccountDTO dto = new AccountDTO();
         dto.setId(account.getId());
         dto.setAccountNumber(account.getAccountNumber());
         dto.setBalance(account.getBalance());
         dto.setUserId(account.getUser().getId());
+        dto.setBankCode(account.getBankCode());
+        dto.setBankName(account.getBankName());
+        
+        // Mapear información completa del titular
+        User user = account.getUser();
+        dto.setOwnerName(user.getFirstName() + " " + user.getLastName());
+        dto.setOwnerEmail(user.getEmail());
+        dto.setOwnerPhone(user.getPhone());
+        dto.setOwnerDocumentNumber(user.getDocumentNumber());
+        dto.setOwnerDocumentType(user.getDocumentType());
+        
         return dto;
     }
 

@@ -9,4 +9,5 @@ public interface AccountService {
     List<AccountDTO> getAccountsByUserId(Long userId);
     List<AccountDTO> getAllAccounts();
     AccountDTO getById(Long id);
+    AccountDTO updateBankInfo(Long accountId, String bankCode, String bankName);
 }

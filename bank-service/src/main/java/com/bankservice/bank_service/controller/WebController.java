@@ -158,11 +158,12 @@ public class WebController {
                     return "error";
                 }
                 
-                // Obtener todas las cuentas para mostrar en el formulario de destino
+                // Obtener todas las cuentas del mismo banco para mostrar en el formulario de destino
                 List<AccountDTO> allAccounts = accountService.getAllAccounts();
-                // Filtrar la cuenta actual para que no aparezca como destino
+                // Filtrar solo cuentas del mismo banco y excluir la cuenta actual
                 List<AccountDTO> destinationAccounts = allAccounts.stream()
                         .filter(acc -> !acc.getId().equals(accountId))
+                        .filter(acc -> acc.getBankCode() != null && acc.getBankCode().equals(account.getBankCode()))
                         .toList();
                 
                 model.addAttribute("account", account);
@@ -174,6 +175,74 @@ public class WebController {
             }
         } catch (Exception e) {
             model.addAttribute("error", "Error al cargar el formulario de transferencia: " + e.getMessage());
+            return "error";
+        }
+    }
+    
+    @GetMapping("/admin/accounts")
+    public String adminAccounts(Model model, Authentication authentication) {
+        try {
+            if (authentication != null && authentication.isAuthenticated()) {
+                CustomUserDetailsImpl userDetails = (CustomUserDetailsImpl) authentication.getPrincipal();
+                
+                // Obtener todas las cuentas para administración
+                List<AccountDTO> allAccounts = accountService.getAllAccounts();
+                
+                model.addAttribute("accounts", allAccounts);
+                model.addAttribute("username", userDetails.getUsername());
+                return "admin-accounts";
+            } else {
+                return "redirect:/login";
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Error al cargar las cuentas: " + e.getMessage());
+            return "error";
+        }
+    }
+    
+    @PostMapping("/admin/accounts/{id}/changeBank")
+    public String changeBankAccount(@PathVariable Long id,
+                                   @RequestParam String bankCode,
+                                   @RequestParam String bankName,
+                                   Authentication authentication,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            if (authentication != null && authentication.isAuthenticated()) {
+                // Actualizar la información bancaria de la cuenta
+                AccountDTO updatedAccount = accountService.updateBankInfo(id, bankCode, bankName);
+                redirectAttributes.addFlashAttribute("success", 
+                    "Banco cambiado exitosamente a: " + bankName + " (" + bankCode + ") para la cuenta " + updatedAccount.getAccountNumber());
+                return "redirect:/admin/accounts";
+            } else {
+                return "redirect:/login";
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al cambiar banco: " + e.getMessage());
+            return "redirect:/admin/accounts";
+        }
+    }
+    
+    @GetMapping("/transactions/interbank")
+    public String newInterbankTransferForm(@RequestParam Long accountId, Model model, Authentication authentication) {
+        try {
+            if (authentication != null && authentication.isAuthenticated()) {
+                CustomUserDetailsImpl userDetails = (CustomUserDetailsImpl) authentication.getPrincipal();
+                AccountDTO account = accountService.getById(accountId);
+                
+                // Verificar que la cuenta pertenece al usuario
+                if (!account.getUserId().equals(userDetails.getId())) {
+                    model.addAttribute("error", "No tienes acceso a esta cuenta.");
+                    return "error";
+                }
+                
+                model.addAttribute("account", account);
+                model.addAttribute("username", userDetails.getUsername());
+                return "interbank-transfer";
+            } else {
+                return "redirect:/login";
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Error al cargar el formulario de transferencia interbancaria: " + e.getMessage());
             return "error";
         }
     }
@@ -218,6 +287,100 @@ public class WebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al realizar la transferencia: " + e.getMessage());
             return "redirect:/transactions/new?accountId=" + fromAccountId;
+        }
+    }
+    
+    @PostMapping("/transactions/interbank")
+    public String createInterbankTransfer(@RequestParam Long fromAccountId,
+                                         @RequestParam String bankCode,
+                                         @RequestParam String accountNumber,
+                                         @RequestParam String beneficiaryName,
+                                         @RequestParam String beneficiaryDocument,
+                                         @RequestParam BigDecimal amount,
+                                         @RequestParam String description,
+                                         Authentication authentication,
+                                         RedirectAttributes redirectAttributes) {
+        try {
+            if (authentication != null && authentication.isAuthenticated()) {
+                CustomUserDetailsImpl userDetails = (CustomUserDetailsImpl) authentication.getPrincipal();
+                AccountDTO fromAccount = accountService.getById(fromAccountId);
+                
+                // Verificar que la cuenta origen pertenece al usuario
+                if (!fromAccount.getUserId().equals(userDetails.getId())) {
+                    redirectAttributes.addFlashAttribute("error", "No tienes acceso a esta cuenta.");
+                    return "redirect:/accounts";
+                }
+                
+                // Verificar que hay suficiente saldo (incluyendo comisión interbancaria)
+                BigDecimal interbankFee = amount.multiply(new BigDecimal("0.005")); // 0.5% de comisión
+                BigDecimal totalAmount = amount.add(interbankFee);
+                
+                if (fromAccount.getBalance().compareTo(totalAmount) < 0) {
+                    redirectAttributes.addFlashAttribute("error", 
+                        "Saldo insuficiente. Monto: $" + amount + " + Comisión: $" + interbankFee + " = Total: $" + totalAmount);
+                    return "redirect:/transactions/interbank?accountId=" + fromAccountId;
+                }
+                
+                // Verificar si la cuenta destino existe en nuestro sistema
+                AccountDTO toAccount = null;
+                try {
+                    // Buscar cuenta por número de cuenta y código de banco
+                    List<AccountDTO> allAccounts = accountService.getAllAccounts();
+                    toAccount = allAccounts.stream()
+                            .filter(acc -> acc.getAccountNumber().equals(accountNumber) && acc.getBankCode().equals(bankCode))
+                            .findFirst()
+                            .orElse(null);
+                } catch (Exception e) {
+                    // Si hay error, la cuenta no existe en nuestro sistema
+                    toAccount = null;
+                }
+                
+                if (toAccount != null) {
+                    // Es una transferencia interna entre cuentas de nuestro sistema
+                    TransactionDTO transactionDTO = new TransactionDTO();
+                    transactionDTO.setFromAccountId(fromAccountId);
+                    transactionDTO.setToAccountId(toAccount.getId());
+                    transactionDTO.setAmount(amount); // Sin comisión para transferencias internas
+                    transactionDTO.setDescription("TRANSFERENCIA INTERNA - " + 
+                        "De: " + fromAccount.getAccountNumber() + " (" + fromAccount.getBankName() + ") - " +
+                        "A: " + toAccount.getAccountNumber() + " (" + toAccount.getBankName() + ") - " +
+                        "Beneficiario: " + beneficiaryName + " - " +
+                        "Descripción: " + description);
+                    
+                    // Procesar la transferencia normal (débito y crédito)
+                    transactionService.transfer(transactionDTO);
+                    
+                    redirectAttributes.addFlashAttribute("success", 
+                        "✅ Transferencia completada entre bancos del grupo financiero. " +
+                        "Monto transferido: $" + amount + " (sin comisión por ser transferencia interna)");
+                } else {
+                    // Es una transferencia realmente interbancaria (externa)
+                    // Crear la transacción interbancaria
+                    TransactionDTO transactionDTO = new TransactionDTO();
+                    transactionDTO.setFromAccountId(fromAccountId);
+                    transactionDTO.setToAccountId(null); // No hay cuenta destino en nuestro sistema
+                    transactionDTO.setAmount(totalAmount); // Incluye la comisión
+                    transactionDTO.setDescription("TRANSFERENCIA INTERBANCARIA - " + 
+                        "Banco: " + bankCode + " - " +
+                        "Cuenta: " + accountNumber + " - " +
+                        "Beneficiario: " + beneficiaryName + " - " +
+                        "Documento: " + beneficiaryDocument + " - " +
+                        "Descripción: " + description);
+                    
+                    // Procesar la transferencia (solo débito de nuestra cuenta)
+                    transactionService.transfer(transactionDTO);
+                    
+                    redirectAttributes.addFlashAttribute("success", 
+                        "✅ Transferencia interbancaria externa procesada exitosamente. " +
+                        "Monto transferido: $" + amount + " + Comisión: $" + interbankFee + " = Total debitado: $" + totalAmount);
+                }
+                return "redirect:/accounts/" + fromAccountId;
+            } else {
+                return "redirect:/login";
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al realizar la transferencia interbancaria: " + e.getMessage());
+            return "redirect:/transactions/interbank?accountId=" + fromAccountId;
         }
     }
 

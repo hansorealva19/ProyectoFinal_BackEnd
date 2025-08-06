@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Administración de Cuentas - Bank Service</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+<div class="container mt-5">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/accounts}">Mis Cuentas</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Administración de Cuentas
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-gear"></i>
+                    Administración de Cuentas
+                </h4>
+                <a th:href="@{/accounts}" class="btn btn-dark btn-sm">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <p class="mb-0">
+                <i class="bi bi-info-circle"></i>
+                Desde aquí puedes simular múltiples bancos cambiando el banco de las cuentas existentes.
+            </p>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Lista de cuentas -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Todas las Cuentas del Sistema</h5>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(accounts)}" class="text-center py-4">
+                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-2">No hay cuentas</h5>
+                <p class="text-muted">No se encontraron cuentas en el sistema</p>
+            </div>
+            
+            <div th:unless="${#lists.isEmpty(accounts)}">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Número de Cuenta</th>
+                            <th>Propietario</th>
+                            <th>Banco Actual</th>
+                            <th>Saldo</th>
+                            <th>Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="account : ${accounts}">
+                            <td th:text="${account.id}"></td>
+                            <td>
+                                <strong th:text="${account.accountNumber}"></strong>
+                            </td>
+                            <td>
+                                <span th:text="${account.ownerName != null ? account.ownerName : 'Usuario ID: ' + account.userId}"></span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary" th:text="${account.bankName != null ? account.bankName + ' (' + account.bankCode + ')' : 'Mi Banco (MIBANK)'}"></span>
+                            </td>
+                            <td class="text-success">
+                                <strong>$<span th:text="${#numbers.formatDecimal(account.balance,1,2)}"></span></strong>
+                            </td>
+                            <td>
+                                <button type="button" 
+                                        class="btn btn-warning btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        th:data-bs-target="'#changeBankModal' + ${account.id}">
+                                    <i class="bi bi-bank"></i> Cambiar Banco
+                                </button>
+                                
+                                <!-- Modal para cambiar banco -->
+                                <div class="modal fade" th:id="'changeBankModal' + ${account.id}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Cambiar Banco - Cuenta <span th:text="${account.accountNumber}"></span></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form th:action="@{'/admin/accounts/' + ${account.id} + '/changeBank'}" method="post">
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Seleccionar Nuevo Banco:</label>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="radio" name="bankCode" value="MIBANK" th:checked="${account.bankCode == null or account.bankCode == 'MIBANK'}">
+                                                                    <label class="form-check-label">Mi Banco</label>
+                                                                    <input type="hidden" name="bankName" value="Mi Banco">
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="radio" name="bankCode" value="BBVA" th:checked="${account.bankCode == 'BBVA'}">
+                                                                    <label class="form-check-label">BBVA Bancomer</label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="radio" name="bankCode" value="BANAMEX" th:checked="${account.bankCode == 'BANAMEX'}">
+                                                                    <label class="form-check-label">Citibanamex</label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="radio" name="bankCode" value="SANTANDER" th:checked="${account.bankCode == 'SANTANDER'}">
+                                                                    <label class="form-check-label">Banco Santander</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="radio" name="bankCode" value="BANORTE" th:checked="${account.bankCode == 'BANORTE'}">
+                                                                    <label class="form-check-label">Banorte</label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="radio" name="bankCode" value="HSBC" th:checked="${account.bankCode == 'HSBC'}">
+                                                                    <label class="form-check-label">HSBC México</label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="radio" name="bankCode" value="SCOTIABANK" th:checked="${account.bankCode == 'SCOTIABANK'}">
+                                                                    <label class="form-check-label">Scotiabank</label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="radio" name="bankCode" value="AZTECA" th:checked="${account.bankCode == 'AZTECA'}">
+                                                                    <label class="form-check-label">Banco Azteca</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" class="btn btn-warning">Cambiar Banco</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información sobre pruebas -->
+    <div class="mt-4">
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-lightbulb"></i>
+            <strong>Cómo probar múltiples bancos:</strong>
+            <ol class="mb-0 mt-2">
+                <li>Cambia algunas cuentas a diferentes bancos usando los botones "Cambiar Banco"</li>
+                <li>Las transferencias normales solo mostrarán cuentas del mismo banco</li>
+                <li>Las transferencias interbancarias permitirán enviar a cualquier banco externo</li>
+                <li>Puedes crear varias cuentas y asignarlas a diferentes bancos para simular un ecosistema completo</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Auto-completar el campo bankName basado en la selección
+document.querySelectorAll('input[name="bankCode"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const bankNames = {
+            'MIBANK': 'Mi Banco',
+            'BBVA': 'BBVA Bancomer',
+            'BANAMEX': 'Citibanamex',
+            'SANTANDER': 'Banco Santander',
+            'BANORTE': 'Banorte',
+            'HSBC': 'HSBC México',
+            'SCOTIABANK': 'Scotiabank',
+            'AZTECA': 'Banco Azteca'
+        };
+        
+        const form = this.closest('form');
+        const bankNameInput = form.querySelector('input[name="bankName"]');
+        if (bankNameInput) {
+            bankNameInput.value = bankNames[this.value] || this.value;
+        }
+    });
+});
+</script>
+</body>
+</html>
