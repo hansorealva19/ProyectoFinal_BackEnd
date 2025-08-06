@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cuentas Bancarias - Bank Service</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <!-- Header con usuario y logout -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Mis Cuentas Bancarias</h2>
+            <p class="text-muted mb-0">Bienvenido, <span th:text="${username ?: 'Usuario'}"></span></p>
+        </div>
+        <div>
+            <a th:href="@{/logout}" class="btn btn-outline-danger">Cerrar Sesión</a>
+        </div>
+    </div>
+    
+    <!-- Mensajes de éxito/error -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <!-- Botón para nueva cuenta -->
+    <div class="mb-3">
+        <a th:href="@{/accounts/new}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nueva Cuenta
+        </a>
+    </div>
+    
+    <!-- Tabla de cuentas -->
+    <div class="card">
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(accounts)}" class="text-center py-4">
+                <h5 class="text-muted">No tienes cuentas registradas</h5>
+                <p class="text-muted">Crea tu primera cuenta para comenzar</p>
+                <a th:href="@{/accounts/new}" class="btn btn-primary">Crear Primera Cuenta</a>
+            </div>
+            
+            <div th:unless="${#lists.isEmpty(accounts)}">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>N° Cuenta</th>
+                        <th>Saldo</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="account : ${accounts}">
+                        <td>
+                            <strong th:text="${account.accountNumber}"></strong>
+                        </td>
+                        <td>
+                            <span class="text-success fw-bold">$<span th:text="${#numbers.formatDecimal(account.balance,1,2)}"></span></span>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{'/accounts/' + ${account.id}}" class="btn btn-primary btn-sm">
+                                Ver Detalle
+                            </a>
+                            <a th:href="@{'/transactions/new?accountId=' + ${account.id}}" class="btn btn-info btn-sm">
+                                Transferir
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

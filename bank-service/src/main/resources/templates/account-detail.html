@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle de Cuenta - Bank Service</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+<div class="container mt-5">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/accounts}">Mis Cuentas</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Cuenta <span th:text="${account.accountNumber}"></span>
+            </li>
+        </ol>
+    </nav>
+    
+    <!-- Header con información de la cuenta -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-credit-card"></i>
+                    Cuenta N° <span th:text="${account.accountNumber}"></span>
+                </h4>
+                <a th:href="@{/accounts}" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Información de la Cuenta</h5>
+                    <p><strong>Propietario:</strong> <span th:text="${userFullName}"></span></p>
+                    <p><strong>Email:</strong> <span th:text="${userEmail}"></span></p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Saldo Actual</h5>
+                    <h2 class="text-success">
+                        $<span th:text="${#numbers.formatDecimal(account.balance,1,2)}"></span>
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Acciones rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-right-circle text-primary" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">Transferir Dinero</h5>
+                    <p class="card-text">Envía dinero a otra cuenta</p>
+                    <a th:href="@{'/transactions/new?accountId=' + ${account.id}}" class="btn btn-primary">
+                        Transferir
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-list-ul text-info" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2">Historial</h5>
+                    <p class="card-text">Ver todas las transacciones</p>
+                    <a th:href="@{'/transactions?accountId=' + ${account.id}}" class="btn btn-info">
+                        Ver Historial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Últimas transacciones -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Últimas Transacciones</h5>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(transactions)}" class="text-center py-4">
+                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-2">No hay transacciones</h5>
+                <p class="text-muted">Esta cuenta no tiene movimientos registrados</p>
+            </div>
+            
+            <div th:unless="${#lists.isEmpty(transactions)}">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>Monto</th>
+                            <th>Tipo</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="transaction : ${transactions}">
+                            <td th:text="${#temporals.format(transaction.date, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td>
+                                <span th:if="${transaction.toAccountId == account.id}">Recibido de cuenta: </span>
+                                <span th:if="${transaction.fromAccountId == account.id}">Enviado a cuenta: </span>
+                                <span th:if="${transaction.toAccountId == account.id}" th:text="${transaction.fromAccountId}"></span>
+                                <span th:if="${transaction.fromAccountId == account.id}" th:text="${transaction.toAccountId}"></span>
+                                <br>
+                                <small class="text-muted" th:text="${transaction.description}"></small>
+                            </td>
+                            <td>
+                                <span th:if="${transaction.toAccountId == account.id}" class="text-success fw-bold">
+                                    +$<span th:text="${#numbers.formatDecimal(transaction.amount,1,2)}"></span>
+                                </span>
+                                <span th:if="${transaction.fromAccountId == account.id}" class="text-danger fw-bold">
+                                    -$<span th:text="${#numbers.formatDecimal(transaction.amount,1,2)}"></span>
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${transaction.toAccountId == account.id}" class="badge bg-success">Ingreso</span>
+                                <span th:if="${transaction.fromAccountId == account.id}" class="badge bg-danger">Egreso</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-3" th:if="${transactions.size() >= 5}">
+                    <a th:href="@{'/transactions?accountId=' + ${account.id}}" class="btn btn-outline-primary">
+                        Ver Todas las Transacciones
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

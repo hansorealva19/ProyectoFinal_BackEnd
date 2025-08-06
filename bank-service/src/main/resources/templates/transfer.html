@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferir Dinero - Bank Service</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+<div class="container mt-5">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/accounts}">Mis Cuentas</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{'/accounts/' + ${account.id}}">Cuenta <span th:text="${account.accountNumber}"></span></a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Transferir Dinero
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-arrow-right-circle"></i>
+                    Transferir Dinero
+                </h4>
+                <a th:href="@{'/accounts/' + ${account.id}}" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Cuenta Origen</h5>
+                    <p><strong>Número:</strong> <span th:text="${account.accountNumber}"></span></p>
+                    <p><strong>Propietario:</strong> <span th:text="${username}"></span></p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Saldo Disponible</h5>
+                    <h3 class="text-success">
+                        $<span th:text="${#numbers.formatDecimal(account.balance,1,2)}"></span>
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Formulario de transferencia -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Datos de la Transferencia</h5>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/transactions/new}" method="post">
+                <input type="hidden" name="fromAccountId" th:value="${account.id}">
+                
+                <div class="mb-3">
+                    <label for="toAccountId" class="form-label">
+                        <i class="bi bi-bank"></i> Cuenta Destino
+                    </label>
+                    <select class="form-select" id="toAccountId" name="toAccountId" required>
+                        <option value="">Selecciona una cuenta destino</option>
+                        <option th:each="destAccount : ${destinationAccounts}" 
+                                th:value="${destAccount.id}" 
+                                th:text="${destAccount.accountNumber + ' - Usuario ID: ' + destAccount.userId}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="amount" class="form-label">
+                        <i class="bi bi-currency-dollar"></i> Monto a Transferir
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" 
+                               class="form-control" 
+                               id="amount" 
+                               name="amount" 
+                               step="0.01" 
+                               min="0.01" 
+                               th:max="${account.balance}"
+                               placeholder="0.00" 
+                               required>
+                    </div>
+                    <div class="form-text">
+                        Saldo disponible: $<span th:text="${#numbers.formatDecimal(account.balance,1,2)}"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">
+                        <i class="bi bi-chat-left-text"></i> Descripción
+                    </label>
+                    <textarea class="form-control" 
+                              id="description" 
+                              name="description" 
+                              rows="3" 
+                              placeholder="Describe el motivo de la transferencia (opcional)"></textarea>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a th:href="@{'/accounts/' + ${account.id}}" class="btn btn-secondary me-md-2">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Realizar Transferencia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="mt-4">
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i>
+            <strong>Información importante:</strong>
+            <ul class="mb-0 mt-2">
+                <li>Las transferencias son procesadas inmediatamente</li>
+                <li>Verifica que la cuenta destino sea correcta antes de confirmar</li>
+                <li>El monto no puede exceder tu saldo disponible</li>
+                <li>Todas las transacciones quedan registradas en tu historial</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
