@@ -25,12 +25,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register", "/error").permitAll() // Rutas públicas
-                        .requestMatchers("/api/auth/**").permitAll() // API de autenticación pública
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // Recursos estáticos
-                        .anyRequest().authenticated()
-                )
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/login", "/register", "/error").permitAll() // Rutas públicas
+            .requestMatchers("/api/auth/**").permitAll() // API de autenticación pública
+            .requestMatchers("/api/cards/charge").permitAll() // Permitir pagos con tarjeta desde la pasarela
+            .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // Recursos estáticos
+            .anyRequest().authenticated()
+        )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/accounts", true)

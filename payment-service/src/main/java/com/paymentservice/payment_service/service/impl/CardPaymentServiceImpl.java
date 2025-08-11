@@ -16,7 +16,7 @@ import org.springframework.http.MediaType;
 @RequiredArgsConstructor
 public class CardPaymentServiceImpl implements CardPaymentService {
 
-    @Value("${bank.service.url:http://localhost:8081}")
+    @Value("${bank.service.url:http://localhost:8080}")
     private String bankServiceUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();

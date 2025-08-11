@@ -10,4 +10,5 @@ public class CardPaymentRequest {
     private String cvv;
     private String expirationDate; // yyyy-MM-dd
     private BigDecimal amount;
+    private String description; // descripción opcional del pago
 }

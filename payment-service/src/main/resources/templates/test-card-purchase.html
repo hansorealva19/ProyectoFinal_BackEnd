@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Prueba de Compra con Tarjeta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h2 class="mb-4">Simulador de Compra con Tarjeta</h2>
+    <form id="cardPurchaseForm">
+        <div class="mb-3">
+            <label for="cardNumber" class="form-label">Número de Tarjeta</label>
+            <input type="text" class="form-control" id="cardNumber" name="cardNumber" required maxlength="19" placeholder="4111 1111 1111 1111">
+        </div>
+        <div class="mb-3">
+            <label for="cardHolder" class="form-label">Titular</label>
+            <input type="text" class="form-control" id="cardHolder" name="cardHolder" required placeholder="Nombre completo">
+        </div>
+        <div class="mb-3">
+            <label for="cvv" class="form-label">CVV</label>
+            <input type="text" class="form-control" id="cvv" name="cvv" required maxlength="4" placeholder="123">
+        </div>
+        <div class="mb-3">
+            <label for="expirationDate" class="form-label">Fecha de Expiración</label>
+            <input type="text" class="form-control" id="expirationDate" name="expirationDate" required placeholder="2026-12-31">
+        </div>
+        <div class="mb-3">
+            <label for="amount" class="form-label">Monto</label>
+            <input type="number" class="form-control" id="amount" name="amount" required min="0.01" step="0.01" placeholder="100.00">
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Descripción del Pago (opcional)</label>
+            <input type="text" class="form-control" id="description" name="description" placeholder="Ej: Compra en Tienda XYZ">
+        </div>
+        <button type="submit" class="btn btn-primary">Probar Compra</button>
+    </form>
+    <div id="result" class="mt-4"></div>
+</div>
+<script>
+document.getElementById('cardPurchaseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data = {
+        cardNumber: document.getElementById('cardNumber').value,
+        cardHolder: document.getElementById('cardHolder').value,
+        cvv: document.getElementById('cvv').value,
+        expirationDate: document.getElementById('expirationDate').value,
+        amount: document.getElementById('amount').value,
+        description: document.getElementById('description').value
+    };
+    const resultDiv = document.getElementById('result');
+    try {
+        const response = await fetch('/test/card-purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        let resText = await response.text();
+        try {
+            const resJson = JSON.parse(resText);
+            if (response.ok) {
+                resultDiv.innerHTML = `<div class='alert alert-success'>${JSON.stringify(resJson)}</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class='alert alert-danger'>${resJson.message || 'Error al procesar el pago'}</div>`;
+            }
+        } catch (err) {
+            // No es JSON, mostrar texto plano
+            resultDiv.innerHTML = `<div class='alert alert-danger'>${resText || 'Error inesperado del backend'}</div>`;
+        }
+    } catch (err) {
+        resultDiv.innerHTML = `<div class='alert alert-danger'>Error de red o de servidor: ${err}</div>`;
+    }
+});
+</script>
+</body>
+</html>

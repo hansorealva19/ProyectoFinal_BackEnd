@@ -76,7 +76,11 @@
                             <td>
                                 <span th:if="${transaction.toAccountId == account.id}">Recibido de cuenta: </span>
                                 <span th:if="${transaction.fromAccountId == account.id and transaction.toAccountId != null}">Enviado a cuenta: </span>
-                                <span th:if="${transaction.fromAccountId == account.id and transaction.toAccountId == null}">Transferencia Interbancaria</span>
+                                <span th:if="${transaction.fromAccountId == account.id and transaction.toAccountId == null}">
+                                    <span th:if="${transaction.description != null and #strings.containsIgnoreCase(transaction.description, 'pago con tarjeta')}">Consumo con tarjeta</span>
+                                    <span th:if="${transaction.description != null and !#strings.containsIgnoreCase(transaction.description, 'pago con tarjeta') and #strings.containsIgnoreCase(transaction.description, 'transferencia')}">Transferencia Interbancaria</span>
+                                    <span th:if="${transaction.description == null or (!#strings.containsIgnoreCase(transaction.description, 'pago con tarjeta') and !#strings.containsIgnoreCase(transaction.description, 'transferencia'))}">Otro egreso</span>
+                                </span>
                                 <span th:if="${transaction.toAccountId == account.id}" th:text="${transaction.fromAccountId}"></span>
                                 <span th:if="${transaction.fromAccountId == account.id and transaction.toAccountId != null}" th:text="${transaction.toAccountId}"></span>
                                 <br>

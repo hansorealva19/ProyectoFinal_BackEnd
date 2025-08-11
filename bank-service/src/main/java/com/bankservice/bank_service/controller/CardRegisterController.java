@@ -27,9 +27,22 @@ public class CardRegisterController {
 
     @PostMapping("/cards/register")
     public String registerCard(@ModelAttribute CardRegisterRequest cardRegisterRequest, Model model) {
-        cardRegisterService.registerCard(cardRegisterRequest);
-        model.addAttribute("success", "Tarjeta registrada correctamente");
-        model.addAttribute("cardRegisterRequest", new CardRegisterRequest());
+        try {
+            cardRegisterService.registerCard(cardRegisterRequest);
+            model.addAttribute("success", "Tarjeta registrada correctamente");
+            model.addAttribute("cardRegisterRequest", new CardRegisterRequest());
+        } catch (Exception e) {
+            String errorMsg = "Error al registrar la tarjeta: ";
+            if (e instanceof java.util.NoSuchElementException) {
+                errorMsg += "La cuenta asociada no existe.";
+            } else if (e.getMessage() != null) {
+                errorMsg += e.getMessage();
+            } else {
+                errorMsg += "Error desconocido.";
+            }
+            model.addAttribute("error", errorMsg);
+            model.addAttribute("cardRegisterRequest", cardRegisterRequest);
+        }
         return "card-register";
     }
 }

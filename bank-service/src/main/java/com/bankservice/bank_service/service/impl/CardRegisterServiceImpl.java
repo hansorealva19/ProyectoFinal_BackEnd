@@ -19,10 +19,12 @@ public class CardRegisterServiceImpl implements CardRegisterService {
 
     @Override
     public void registerCard(CardRegisterRequest request) {
+        System.out.println("DEBUG CardRegisterRequest: " + request);
         Account account = accountRepository.findByAccountNumber(request.getAccountNumber()).orElseThrow();
+        String fullName = account.getUser().getFirstName() + " " + account.getUser().getLastName();
         Card card = Card.builder()
                 .cardNumber(request.getCardNumber())
-                .cardHolder(request.getCardHolder())
+                .cardHolder(fullName)
                 .cvv(request.getCvv())
                 .expirationDate(LocalDate.parse(request.getExpirationDate()))
                 .account(account)
