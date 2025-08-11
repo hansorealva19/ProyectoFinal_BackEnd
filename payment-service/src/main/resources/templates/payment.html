@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Page</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css"/>
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Realizar Pago</h2>
+    <form method="post" th:action="@{/api/payments}" th:object="${paymentRequest}">
+        <div class="mb-3">
+            <label for="payerAccount" class="form-label">Cuenta Origen</label>
+            <input type="text" class="form-control" id="payerAccount" th:field="*{payerAccount}" required>
+        </div>
+        <div class="mb-3">
+            <label for="payeeAccount" class="form-label">Cuenta Destino</label>
+            <input type="text" class="form-control" id="payeeAccount" th:field="*{payeeAccount}" required>
+        </div>
+        <div class="mb-3">
+            <label for="amount" class="form-label">Monto</label>
+            <input type="number" class="form-control" id="amount" th:field="*{amount}" required>
+        </div>
+        <div class="mb-3">
+            <label for="currency" class="form-label">Moneda</label>
+            <input type="text" class="form-control" id="currency" th:field="*{currency}" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Descripción</label>
+            <input type="text" class="form-control" id="description" th:field="*{description}">
+        </div>
+        <button type="submit" class="btn btn-primary">Pagar</button>
+    </form>
+</div>
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
