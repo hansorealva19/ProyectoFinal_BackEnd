@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle de Pago</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css"/>
+    <script th:src="@{/js/main.js}" defer></script>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Detalle de Pago</h1>
+    <table class="table table-bordered">
+        <tr><th>ID</th><td th:text="${payment.id}"></td></tr>
+        <tr><th>Fecha</th><td th:text="${payment.date}"></td></tr>
+        <tr><th>Monto</th><td th:text="${payment.amount}"></td></tr>
+        <tr><th>Estado</th><td th:text="${payment.status}"></td></tr>
+        <tr><th>Cuenta Origen</th><td th:text="${payment.sourceAccount}"></td></tr>
+        <tr><th>Cuenta Destino</th><td th:text="${payment.destinationAccount}"></td></tr>
+        <tr><th>Descripción</th><td th:text="${payment.description}"></td></tr>
+    </table>
+    <a th:href="@{'/backoffice/payments'}" class="btn btn-secondary mt-3">Volver a la lista</a>
+</div>
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -5,9 +5,142 @@
     <title>Detalle de Cuenta - Bank Service</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <style>
+        /* --- Estilos de Tarjeta Animada --- */
+        .card-anim {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            color: #fff;
+            border-radius: 1.3rem;
+            min-height: 220px;
+            box-shadow: 0 8px 32px rgba(44,62,80,0.18);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(.4,2,.3,1), box-shadow 0.3s;
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+        }
+        .card-anim:hover {
+            transform: scale(1.05) rotate(-1deg);
+            box-shadow: 0 16px 40px rgba(44,62,80,0.28);
+        }
+        .card-anim .chip {
+            position: absolute;
+            top: 1.2rem;
+            left: 1.5rem;
+            width: 48px;
+            height: 32px;
+            background: linear-gradient(135deg, #e0e0e0 60%, #bdbdbd 100%);
+            border-radius: 7px;
+            box-shadow: 0 2px 8px #0002;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+        .chip-lines {
+            width: 36px;
+            height: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .chip-line {
+            height: 2px;
+            background: #bdbdbd;
+            border-radius: 1px;
+            opacity: 0.7;
+        }
+        .card-anim .wave {
+            position: absolute;
+            right: -40px;
+            top: -40px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.10);
+            border-radius: 50%;
+            animation: waveMove 3s infinite linear;
+        }
+        @keyframes waveMove {
+            0% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.1) translateY(10px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+        .card-anim .logo {
+            position: absolute;
+            bottom: 1.2rem;
+            right: 1.5rem;
+            font-size: 2.2rem;
+            opacity: 0.85;
+            z-index: 2;
+        }
+        .card-anim .card-number {
+            font-size: 1.4rem;
+            letter-spacing: 2.5px;
+            margin-bottom: 0.5rem;
+            font-family: 'OCR A Std', 'Courier New', Courier, monospace;
+            text-shadow: 0 1px 2px #0003;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .card-anim .card-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        .card-anim .card-holder {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .card-anim .card-meta {
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.2rem;
+            position: relative;
+            z-index: 2;
+        }
+        .card-anim .status-text {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .card-anim .delete-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.12);
+            border: none;
+            color: #fff;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            z-index: 3;
+        }
+        .card-anim .delete-btn:hover {
+            background: rgba(255,0,0,0.18);
+            color: #ff5252;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-5">
+    <!-- Mensajes de éxito y error -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     <!-- Navigation -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -19,8 +152,8 @@
             </li>
         </ol>
     </nav>
-    
-    <!-- Header con información de la cuenta -->
+
+    <!-- Header -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
             <div class="d-flex justify-content-between align-items-center">
@@ -49,47 +182,150 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Acciones rápidas -->
     <div class="row mb-4">
+        <!-- Transferir -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body text-center">
                     <i class="bi bi-arrow-right-circle text-primary" style="font-size: 2rem;"></i>
                     <h5 class="card-title mt-2">Transferir</h5>
                     <p class="card-text">Envía dinero a cuentas del mismo banco</p>
-                    <a th:href="@{'/transactions/new?accountId=' + ${account.id}}" class="btn btn-primary">
-                        Transferir
-                    </a>
+                    <a th:href="@{'/transactions/new?accountId=' + ${account.id}}" class="btn btn-primary">Transferir</a>
                 </div>
             </div>
         </div>
+        <!-- Interbancaria -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body text-center">
                     <i class="bi bi-bank text-warning" style="font-size: 2rem;"></i>
                     <h5 class="card-title mt-2">Interbancaria</h5>
                     <p class="card-text">Envía dinero a otros bancos</p>
-                    <a th:href="@{'/transactions/interbank?accountId=' + ${account.id}}" class="btn btn-warning">
-                        Transferir
-                    </a>
+                    <a th:href="@{'/transactions/interbank?accountId=' + ${account.id}}" class="btn btn-warning">Transferir</a>
                 </div>
             </div>
         </div>
+        <!-- Historial -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body text-center">
                     <i class="bi bi-list-ul text-info" style="font-size: 2rem;"></i>
                     <h5 class="card-title mt-2">Historial</h5>
                     <p class="card-text">Ver todas las transacciones</p>
-                    <a th:href="@{'/transactions?accountId=' + ${account.id}}" class="btn btn-info">
-                        Ver Historial
-                    </a>
+                    <a th:href="@{'/transactions?accountId=' + ${account.id}}" class="btn btn-info">Ver Historial</a>
                 </div>
             </div>
         </div>
     </div>
-    
+
+    <!-- Tarjetas asociadas -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Tarjetas Asociadas</h5>
+            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#confirmCreateCardModal">
+                <i class="bi bi-plus-circle"></i> Generar Tarjeta de Débito
+            </button>
+            <!-- Modal de confirmación para crear tarjeta -->
+            <div class="modal fade" id="confirmCreateCardModal" tabindex="-1" aria-labelledby="confirmCreateCardLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirmCreateCardLabel">Confirmar generación de tarjeta</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Estás seguro que deseas generar una nueva tarjeta de débito para esta cuenta?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <form th:action="@{'/accounts/' + ${account.id} + '/generate-card'}" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-primary">Sí, generar tarjeta</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(cards)}" class="text-center py-3">
+                <i class="bi bi-credit-card text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mb-0">No hay tarjetas asociadas a esta cuenta.</p>
+            </div>
+            <div th:unless="${#lists.isEmpty(cards)}" class="row">
+                <div th:each="card : ${cards}" class="col-md-6 col-lg-4 mb-3">
+                    <div class="card-anim">
+                        <div class="wave"></div>
+                        <div class="chip">
+                            <div class="chip-lines">
+                                <div class="chip-line"></div>
+                                <div class="chip-line"></div>
+                                <div class="chip-line"></div>
+                                <div class="chip-line"></div>
+                            </div>
+                        </div>
+                        <div style="margin-left: 0.1rem; margin-top: 2.7rem;">
+                            <div class="card-number">
+                                <i class="bi bi-credit-card-2-front-fill"></i>
+                                <span th:text="${#strings.replace(#strings.replace(#strings.replace(#strings.replace(card.cardNumber, ' ', ''), '(.{4})', '$1 '), '^ ', ''), ' $', '')}" 
+                                      th:utext="${#strings.replace(card.cardNumber.replaceAll('(.{4})', '$1 '), ' $', '')}"></span>
+                            </div>
+                            <div th:if="${card.active}"
+                                 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem; color:#28a745;">Activa</div>
+                            <div th:unless="${card.active}"
+                                 style="font-size:1rem; font-weight:700; margin-bottom:0.5rem; color:#dc3545;">Inactiva</div>
+                            <div class="card-label">Titular</div>
+                            <div class="card-holder" th:text="${card.cardHolder}"></div>
+                            <div class="card-meta">
+                                <span>Expira: <span th:text="${card.expirationDate}"></span></span>
+                                <span>CVV: <span th:text="${card.cvv}"></span></span>
+                            </div>
+                        </div>
+                        <button class="delete-btn" data-bs-toggle="modal" th:data-bs-target="${'#deleteCardModal-' + card.id}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <div class="logo">
+                            <i class="bi bi-bank2"></i>
+                        </div>
+                    </div>
+                    <!-- Modal para eliminar tarjeta -->
+                    <div class="modal fade" th:id="${'deleteCardModal-' + card.id}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Eliminar Tarjeta</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>¿Seguro que deseas eliminar esta tarjeta? Esta acción es irreversible.</p>
+                                    <form th:action="@{'/cards/' + ${card.id} + '/delete'}" method="post">
+                                        <div class="mb-2">
+                                            <label class="form-label">Usuario</label>
+                                            <input type="text" name="username" class="form-control" required />
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">Contraseña</label>
+                                            <input type="password" name="password" class="form-control" required />
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label">DNI</label>
+                                            <input type="text" name="dni" class="form-control" required />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-danger">Eliminar Tarjeta</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Últimas transacciones -->
     <div class="card">
         <div class="card-header">
@@ -101,7 +337,6 @@
                 <h5 class="text-muted mt-2">No hay transacciones</h5>
                 <p class="text-muted">Esta cuenta no tiene movimientos registrados</p>
             </div>
-            
             <div th:unless="${#lists.isEmpty(transactions)}">
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -141,7 +376,6 @@
                         </tbody>
                     </table>
                 </div>
-                
                 <div class="text-center mt-3" th:if="${transactions.size() >= 5}">
                     <a th:href="@{'/transactions?accountId=' + ${account.id}}" class="btn btn-outline-primary">
                         Ver Todas las Transacciones
@@ -153,5 +387,16 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</script>
+<script>
+    // Cierra automáticamente las alertas después de 5 segundos
+    setTimeout(function() {
+        var alertNode = document.querySelector('.alert-dismissible');
+        if (alertNode) {
+            var alert = new bootstrap.Alert(alertNode);
+            alert.close();
+        }
+    }, 5000);
+</script>
 </body>
 </html>

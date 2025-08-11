@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Tarjeta</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css"/>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Registrar Tarjeta</h1>
+    <form th:action="@{/cards/register}" th:object="${cardRegisterRequest}" method="post" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="cardNumber" class="form-label">Número de Tarjeta</label>
+            <input type="text" th:field="*{cardNumber}" class="form-control" id="cardNumber" maxlength="16" required />
+        </div>
+        <div class="mb-3">
+            <label for="cardHolder" class="form-label">Titular</label>
+            <input type="text" th:field="*{cardHolder}" class="form-control" id="cardHolder" required />
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="expirationDate" class="form-label">Fecha de Expiración</label>
+                <input type="text" th:field="*{expirationDate}" class="form-control" id="expirationDate" placeholder="YYYY-MM-DD" required />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="cvv" class="form-label">CVV</label>
+                <input type="text" th:field="*{cvv}" class="form-control" id="cvv" maxlength="4" required />
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="accountNumber" class="form-label">Número de Cuenta Asociada</label>
+            <input type="text" th:field="*{accountNumber}" class="form-control" id="accountNumber" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Registrar Tarjeta</button>
+    </form>
+    <div th:if="${success}" class="alert alert-success mt-3" th:text="${success}"></div>
+</div>
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

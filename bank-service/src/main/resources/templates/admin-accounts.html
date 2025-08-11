@@ -115,42 +115,14 @@
                                                     <div class="mb-3">
                                                         <label class="form-label">Seleccionar Nuevo Banco:</label>
                                                         <div class="row">
-                                                            <div class="col-md-6">
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="radio" name="bankCode" value="MIBANK" th:checked="${account.bankCode == null or account.bankCode == 'MIBANK'}">
-                                                                    <label class="form-check-label">Mi Banco</label>
-                                                                    <input type="hidden" name="bankName" value="Mi Banco">
-                                                                </div>
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="radio" name="bankCode" value="BBVA" th:checked="${account.bankCode == 'BBVA'}">
-                                                                    <label class="form-check-label">BBVA Bancomer</label>
-                                                                </div>
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="radio" name="bankCode" value="BANAMEX" th:checked="${account.bankCode == 'BANAMEX'}">
-                                                                    <label class="form-check-label">Citibanamex</label>
-                                                                </div>
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="radio" name="bankCode" value="SANTANDER" th:checked="${account.bankCode == 'SANTANDER'}">
-                                                                    <label class="form-check-label">Banco Santander</label>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="radio" name="bankCode" value="BANORTE" th:checked="${account.bankCode == 'BANORTE'}">
-                                                                    <label class="form-check-label">Banorte</label>
-                                                                </div>
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="radio" name="bankCode" value="HSBC" th:checked="${account.bankCode == 'HSBC'}">
-                                                                    <label class="form-check-label">HSBC México</label>
-                                                                </div>
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="radio" name="bankCode" value="SCOTIABANK" th:checked="${account.bankCode == 'SCOTIABANK'}">
-                                                                    <label class="form-check-label">Scotiabank</label>
-                                                                </div>
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="radio" name="bankCode" value="AZTECA" th:checked="${account.bankCode == 'AZTECA'}">
-                                                                    <label class="form-check-label">Banco Azteca</label>
-                                                                </div>
+                                                            <div class="col-md-12">
+                                                                <th:block th:each="bank : ${bankList}">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="radio" name="bankCode" th:value="${bank.code}" th:checked="${account.bankCode == null ? bank.code == 'MIBANK' : account.bankCode == bank.code}" th:data-bank-name="${bank.name}">
+                                                                        <label class="form-check-label" th:text="${bank.name}"></label>
+                                                                    </div>
+                                                                </th:block>
+                                                                <input type="hidden" name="bankName" value="" class="bankName-hidden-input">
                                                             </div>
                                                         </div>
                                                     </div>
@@ -190,25 +162,21 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Auto-completar el campo bankName basado en la selección
-document.querySelectorAll('input[name="bankCode"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        const bankNames = {
-            'MIBANK': 'Mi Banco',
-            'BBVA': 'BBVA Bancomer',
-            'BANAMEX': 'Citibanamex',
-            'SANTANDER': 'Banco Santander',
-            'BANORTE': 'Banorte',
-            'HSBC': 'HSBC México',
-            'SCOTIABANK': 'Scotiabank',
-            'AZTECA': 'Banco Azteca'
-        };
-        
-        const form = this.closest('form');
-        const bankNameInput = form.querySelector('input[name="bankName"]');
-        if (bankNameInput) {
-            bankNameInput.value = bankNames[this.value] || this.value;
+document.querySelectorAll('.modal form').forEach(form => {
+    const radios = form.querySelectorAll('input[name="bankCode"]');
+    const bankNameInput = form.querySelector('input.bankName-hidden-input');
+    function updateBankName() {
+        const checked = form.querySelector('input[name="bankCode"]:checked');
+        if (checked && bankNameInput) {
+            bankNameInput.value = checked.getAttribute('data-bank-name') || '';
         }
+    }
+    radios.forEach(radio => {
+        radio.addEventListener('change', updateBankName);
     });
+    // Inicializar al abrir el modal
+    form.addEventListener('submit', updateBankName);
+    updateBankName();
 });
 </script>
 </body>

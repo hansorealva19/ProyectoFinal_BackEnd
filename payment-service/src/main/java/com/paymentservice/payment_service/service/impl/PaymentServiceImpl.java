@@ -1,3 +1,4 @@
+
 package com.paymentservice.payment_service.service.impl;
 
 import com.paymentservice.payment_service.dto.PaymentRequestDTO;
@@ -13,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +23,16 @@ public class PaymentServiceImpl implements PaymentService {
     private static final Logger logger = LoggerFactory.getLogger(PaymentServiceImpl.class);
     private final PaymentRepository paymentRepository;
     private final PaymentEventPublisher paymentEventPublisher;
+
+    @Override
+    public List<Payment> findAll() {
+        return paymentRepository.findAll();
+    }
+
+    @Override
+    public Optional<Payment> findById(Long id) {
+        return paymentRepository.findById(id);
+    }
 
     @Override
     @Transactional

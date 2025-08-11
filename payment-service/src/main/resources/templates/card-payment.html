@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pago con Tarjeta</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css"/>
+    <script th:src="@{/js/main.js}" defer></script>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Pago con Tarjeta</h1>
+    <form th:action="@{/card-payment}" th:object="${cardPaymentRequest}" method="post" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="cardNumber" class="form-label">Número de Tarjeta</label>
+            <input type="text" th:field="*{cardNumber}" class="form-control" id="cardNumber" maxlength="16" required />
+        </div>
+        <div class="mb-3">
+            <label for="cardHolder" class="form-label">Titular</label>
+            <input type="text" th:field="*{cardHolder}" class="form-control" id="cardHolder" required />
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="expirationDate" class="form-label">Fecha de Expiración</label>
+                <input type="text" th:field="*{expirationDate}" class="form-control" id="expirationDate" placeholder="YYYY-MM-DD" required />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="cvv" class="form-label">CVV</label>
+                <input type="text" th:field="*{cvv}" class="form-control" id="cvv" maxlength="4" required />
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="amount" class="form-label">Monto</label>
+            <input type="number" th:field="*{amount}" class="form-control" id="amount" min="1" step="0.01" required />
+        </div>
+        <button type="submit" class="btn btn-success">Pagar</button>
+    </form>
+    <div th:if="${response != null}" class="mt-4">
+        <div th:if="${response.success}" class="alert alert-success" th:text="${response.message}"></div>
+        <div th:if="${!response.success}" class="alert alert-danger" th:text="${response.message}"></div>
+    </div>
+</div>
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

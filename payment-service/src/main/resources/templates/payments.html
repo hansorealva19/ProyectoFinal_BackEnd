@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Backoffice - Pagos</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css"/>
+    <script th:src="@{/js/main.js}" defer></script>
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Movimientos de Pagos</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>Cuenta Origen</th>
+                <th>Cuenta Destino</th>
+                <th>Detalle</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="payment : ${payments}">
+                <td th:text="${payment.id}"></td>
+                <td th:text="${payment.date}"></td>
+                <td th:text="${payment.amount}"></td>
+                <td th:text="${payment.status}"></td>
+                <td th:text="${payment.sourceAccount}"></td>
+                <td th:text="${payment.destinationAccount}"></td>
+                <td><a th:href="@{'/backoffice/payments/' + ${payment.id}}" class="btn btn-info btn-sm">Ver</a></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

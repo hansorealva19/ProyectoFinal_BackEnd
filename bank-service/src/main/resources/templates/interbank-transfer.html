@@ -83,16 +83,9 @@
                         </label>
                         <select class="form-select" id="bankCode" name="bankCode" required>
                             <option value="">Selecciona un banco</option>
-                            <option value="BBVA">BBVA Bancomer</option>
-                            <option value="BANAMEX">Citibanamex</option>
-                            <option value="SANTANDER">Banco Santander</option>
-                            <option value="BANORTE">Banorte</option>
-                            <option value="HSBC">HSBC México</option>
-                            <option value="SCOTIABANK">Scotiabank</option>
-                            <option value="INBURSA">Banco Inbursa</option>
-                            <option value="AZTECA">Banco Azteca</option>
-                            <option value="AFIRME">Banco Afirme</option>
-                            <option value="BAJIO">BanBajío</option>
+                            <th:block th:each="bank : ${bankList}">
+                                <option th:value="${bank.code}" th:text="${bank.name}"></option>
+                            </th:block>
                         </select>
                     </div>
                     <div class="col-md-6">
