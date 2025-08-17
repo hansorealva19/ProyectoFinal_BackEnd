@@ -211,8 +211,8 @@ public class WebController {
                 model.addAttribute("transactions", recentTransactions);
                 model.addAttribute("cards", cardDTOs);
                 model.addAttribute("username", userDetails.getUsername());
-                model.addAttribute("userFullName", userDetails.getUsername());
-                model.addAttribute("userEmail", userDetails.getUsername());
+                model.addAttribute("userFullName", userDetails.getFullName());
+                model.addAttribute("userEmail", userDetails.getEmail());
                 return "account-detail";
             } else {
                 return "redirect:/login";
