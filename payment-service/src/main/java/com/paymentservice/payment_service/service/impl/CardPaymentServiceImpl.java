@@ -3,6 +3,9 @@ package com.paymentservice.payment_service.service.impl;
 import com.paymentservice.payment_service.dto.CardPaymentRequest;
 import com.paymentservice.payment_service.dto.CardPaymentResponse;
 import com.paymentservice.payment_service.service.CardPaymentService;
+import com.paymentservice.payment_service.entity.Payment;
+import com.paymentservice.payment_service.repository.PaymentRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,7 @@ import org.springframework.http.MediaType;
 @Service
 @RequiredArgsConstructor
 public class CardPaymentServiceImpl implements CardPaymentService {
+    private final PaymentRepository paymentRepository;
 
     @Value("${bank.service.url:http://localhost:8080}")
     private String bankServiceUrl;
@@ -29,7 +33,21 @@ public class CardPaymentServiceImpl implements CardPaymentService {
         HttpEntity<CardPaymentRequest> entity = new HttpEntity<>(request, headers);
         try {
             ResponseEntity<CardPaymentResponse> response = restTemplate.postForEntity(url, entity, CardPaymentResponse.class);
-            return response.getBody();
+            CardPaymentResponse result = response.getBody();
+            // Si el pago fue exitoso, registrar en la tabla payments
+            if (result != null && result.isSuccess()) {
+                Payment payment = Payment.builder()
+                        .payerAccount(request.getCardNumber())
+                        .payeeAccount("") // Puedes poner el comercio o dejar vacío
+                        .amount(request.getAmount().doubleValue())
+                        .currency("PEN") // O usa el valor real si lo tienes
+                        .status("COMPLETED")
+                        .createdAt(LocalDateTime.now())
+                        .description(request.getDescription())
+                        .build();
+                paymentRepository.save(payment);
+            }
+            return result;
         } catch (Exception e) {
             CardPaymentResponse error = new CardPaymentResponse();
             error.setSuccess(false);

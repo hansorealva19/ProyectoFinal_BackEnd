@@ -35,4 +35,18 @@ public class Payment {
 
     @Column(nullable = true)
     private String description;
+
+    // For Thymeleaf compatibility: expose 'date' as alias for createdAt
+    public LocalDateTime getDate() {
+        return createdAt;
+    }
+
+    // For Thymeleaf compatibility: expose 'sourceAccount' and 'destinationAccount'
+    public String getSourceAccount() {
+        return payerAccount;
+    }
+
+    public String getDestinationAccount() {
+        return payeeAccount;
+    }
 }

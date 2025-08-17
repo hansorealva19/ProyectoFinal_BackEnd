@@ -1,0 +1,30 @@
+# eureka-server/src/main/resources/application.yml
+server:
+  port: 8761
+
+spring:
+  application:
+    name: "eureka-server"
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    enable-self-preservation: false
+    eviction-interval-timer-in-ms: 10000
+
+logging:
+  file:
+    name: logs/eureka-server.log
+  level:
+    org.springframework.cloud.netflix.eureka: INFO
+    com.netflix.discovery: INFO
+    com.netflix.eureka: INFO
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} - [%thread] %-5level %logger{36}   - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
