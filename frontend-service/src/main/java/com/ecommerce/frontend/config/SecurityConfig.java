@@ -6,32 +6,54 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.http.HttpMethod;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final JwtSessionFilter jwtSessionFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                                http
-                                        .csrf(csrf -> csrf.disable())
-                                                        .authorizeHttpRequests(auth -> auth
-                                                                // Public: static assets, login and register. Everything else requires authentication.
-                                                                        .requestMatchers("/favicon.ico", "/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
-                                                                        .requestMatchers("/api/users/**").permitAll()
-                                                                        .anyRequest().authenticated()
-                                                        )
-                                        // Use the custom login page at /login so unauthenticated requests are redirected there
-                                        // but avoid Spring processing POST /login so our AuthController can handle it.
-                                        .formLogin(form -> form.loginPage("/login").loginProcessingUrl("/perform_login").permitAll())
-                                        .logout(logout -> logout
-                                                .logoutUrl("/logout")
-                                                .logoutSuccessUrl("/login?logout")
-                                                .invalidateHttpSession(true)
-                                                // delete the custom session cookie name we set in application.yml
-                                                .deleteCookies("FRONTENDSESSIONID")
-                                                .permitAll()
-                                        )
-                                        .addFilterBefore(new JwtSessionFilter(), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
-                                return http.build();
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        // Público: estáticos, login, register
+                        .requestMatchers("/favicon.ico", "/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+
+                        // Listado y detalle de productos públicos
+                        // NOTA: "/products/*" cubre "/products/{id}" pero NO cubre "/products/{id}/edit"
+                        .requestMatchers(HttpMethod.GET, "/products", "/products/*").permitAll()
+
+                        // Edición de productos protegida
+                        .requestMatchers(HttpMethod.GET, "/products/*/edit").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/products/*/edit").authenticated()
+
+                        // Usuarios públicos (ajusta según tu caso real)
+                        .requestMatchers("/api/users/**").permitAll()
+
+                        // Todo lo demás autenticado
+                        .anyRequest().authenticated()
+                )
+                // Login y Logout
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/perform_login")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("FRONTENDSESSIONID")
+                        .permitAll()
+                )
+                // Coloca el filtro que carga la autenticación desde la sesión (JWT guardado)
+                .addFilterBefore(jwtSessionFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 }

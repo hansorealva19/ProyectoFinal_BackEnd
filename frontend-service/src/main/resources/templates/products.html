@@ -34,7 +34,8 @@
         <div class="col-md-4 mb-4" th:each="product : ${products}">
             <div class="card h-100 shadow-sm">
                 <a th:href="@{/products/{id}(id=${product.id})}">
-                    <img th:src="${product.imageUrl}" class="card-img-top" alt="Imagen del producto" />
+                <img th:src="${product.imageUrl}" class="card-img-top" alt="Imagen del producto"
+                    onerror="this.onerror=null;this.src='/images/default-product.png'" />
                 </a>
                 <div class="card-body">
                     <h5 class="card-title">
@@ -49,6 +50,12 @@
                         <div class="invalid-feedback">La cantidad debe ser entre 1 y 99.</div>
                         <button type="submit" class="btn btn-success w-100">Agregar al carrito</button>
                     </form>
+                    <div class="mt-2 d-flex justify-content-between">
+                        <div th:if="${isLogged}">
+                            <a th:href="@{/products/{id}/edit(id=${product.id})}" class="btn btn-outline-secondary">Editar</a>
+                        </div>
+                        <span class="text-muted">Stock: <span th:text="${product.stock}"></span></span>
+                    </div>
                 </div>
             </div>
         </div>

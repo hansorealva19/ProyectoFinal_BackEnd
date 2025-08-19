@@ -13,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.Map;
 
 
 /**
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
   private final ProductRepository productRepository;
+  private final CloudinaryImageService imageService;
 
   //    Crea un nuevo producto
   @Override
@@ -61,6 +63,24 @@ public class ProductServiceImpl implements ProductService {
     } catch (Exception e) {
       log.error("Error creating product: {}", e.getMessage());
       throw new RuntimeException("Error creating product", e);
+    }
+  }
+
+  @Override
+  @Transactional
+  public ProductDTO createProduct(ProductDTO productDTO, MultipartFile imageFile) throws Exception {
+    try {
+      if (imageFile != null && !imageFile.isEmpty()) {
+        Map<String, Object> result = imageService.upload(imageFile, "products");
+        Object url = result.get("secure_url");
+        if (url != null) {
+          productDTO.setImageUrl(url.toString());
+        }
+      }
+      return createProduct(productDTO);
+    } catch (Exception e) {
+      log.error("Error creating product with image: {}", e.getMessage());
+      throw e;
     }
   }
 
@@ -127,6 +147,30 @@ public class ProductServiceImpl implements ProductService {
         log.warn("Producto con ID {} no encontrado", id);
         throw new RuntimeException("Product not found with ID: " + id);
       });
+  }
+
+  @Override
+  @Transactional
+  public ProductDTO updateProductImage(Long id, org.springframework.web.multipart.MultipartFile imageFile) throws Exception {
+    log.info("Updating product image for ID: {}", id);
+
+    return productRepository.findById(id)
+      .map(product -> {
+        try {
+          if (imageFile != null && !imageFile.isEmpty()) {
+            Map<String, Object> result = imageService.upload(imageFile, "products");
+            Object url = result.get("secure_url");
+            if (url != null) {
+              product.setImageUrl(url.toString());
+            }
+          }
+          Product saved = productRepository.save(product);
+          return convertToDTO(saved);
+        } catch (Exception e) {
+          log.error("Error uploading image for product {}: {}", id, e.getMessage());
+          throw new RuntimeException(e);
+        }
+      }).orElseThrow(() -> new RuntimeException("Product not found with ID: " + id));
   }
 
 //buscar productos por categoria
@@ -274,7 +318,10 @@ public class ProductServiceImpl implements ProductService {
     product.setPrice(dto.getPrice());
     product.setStock(dto.getStock());
     product.setCategory(dto.getCategory());
-    product.setImageUrl(dto.getImageUrl());
+    // Only update imageUrl when DTO provides a non-empty value.
+    if (dto.getImageUrl() != null && !dto.getImageUrl().isBlank()) {
+      product.setImageUrl(dto.getImageUrl());
+    }
     if (dto.getActive() != null) {
       product.setActive(dto.getActive());
     }

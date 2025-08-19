@@ -54,9 +54,22 @@ public class ProductRestService {
             }
             Object content = response.get("content");
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            // Support snake_case names that may come from the product-service (e.g. image_url)
-            mapper.setPropertyNamingStrategy(com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE);
-            List<ProductViewModel> products = mapper.convertValue(content, mapper.getTypeFactory().constructCollectionType(List.class, ProductViewModel.class));
+            mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            // Normalize possible snake_case keys (image_url) to camelCase (imageUrl) so ProductViewModel is populated
+            com.fasterxml.jackson.databind.JsonNode node = mapper.valueToTree(content);
+            java.util.List<ProductViewModel> products = new java.util.ArrayList<>();
+            if (node.isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode item : node) {
+                    if (item.isObject()) {
+                        com.fasterxml.jackson.databind.node.ObjectNode obj = (com.fasterxml.jackson.databind.node.ObjectNode) item;
+                        if (obj.has("image_url") && !obj.has("imageUrl")) {
+                            obj.set("imageUrl", obj.get("image_url"));
+                        }
+                        ProductViewModel p = mapper.treeToValue(obj, ProductViewModel.class);
+                        products.add(p);
+                    }
+                }
+            }
             com.ecommerce.frontend.model.ProductPage pageObj = new com.ecommerce.frontend.model.ProductPage();
             pageObj.setContent(products);
             // try to read pageable metadata from the response
@@ -82,6 +95,45 @@ public class ProductRestService {
             return resp.getBody();
         } catch (Exception ex) {
             throw new RuntimeException("Error al obtener producto por id", ex);
+        }
+    }
+
+    public ProductViewModel updateProduct(Long id, ProductViewModel dto, String jwt) {
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            if (jwt != null) headers.setBearerAuth(jwt);
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String body = mapper.writeValueAsString(dto);
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(body, headers);
+            org.springframework.http.ResponseEntity<ProductViewModel> resp = restTemplate.exchange(productServiceUrl + "/api/products/" + id, org.springframework.http.HttpMethod.PUT, entity, ProductViewModel.class);
+            return resp.getBody();
+        } catch (Exception ex) {
+            throw new RuntimeException("Error updating product", ex);
+        }
+    }
+
+    public ProductViewModel updateProductImage(Long id, org.springframework.web.multipart.MultipartFile image, String jwt) {
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            if (jwt != null) headers.setBearerAuth(jwt);
+            headers.setContentType(org.springframework.http.MediaType.MULTIPART_FORM_DATA);
+
+            org.springframework.util.LinkedMultiValueMap<String, Object> body = new org.springframework.util.LinkedMultiValueMap<>();
+
+            // ByteArrayResource to preserve filename
+            org.springframework.core.io.ByteArrayResource bar = new org.springframework.core.io.ByteArrayResource(image.getBytes()){
+                @Override
+                public String getFilename() { return image.getOriginalFilename(); }
+            };
+            body.add("image", bar);
+
+            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, Object>> requestEntity = new org.springframework.http.HttpEntity<>(body, headers);
+
+            org.springframework.http.ResponseEntity<ProductViewModel> resp = restTemplate.exchange(productServiceUrl + "/api/products/" + id + "/image", org.springframework.http.HttpMethod.PUT, requestEntity, ProductViewModel.class);
+            return resp.getBody();
+        } catch (Exception ex) {
+            throw new RuntimeException("Error updating product image", ex);
         }
     }
 

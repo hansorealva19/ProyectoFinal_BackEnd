@@ -13,7 +13,8 @@
                 <div class="card shadow-sm">
                     <div class="row g-0">
                         <div class="col-md-5">
-                            <img th:src="${product.imageUrl}" class="img-fluid rounded-start" alt="Imagen del producto" />
+                       <img th:src="${product.imageUrl}" class="img-fluid rounded-start" alt="Imagen del producto"
+                           onerror="this.onerror=null;this.src='/images/default-product.png'" />
                         </div>
                         <div class="col-md-7">
                             <div class="card-body">

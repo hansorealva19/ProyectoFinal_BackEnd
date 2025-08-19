@@ -20,6 +20,9 @@ import java.util.Optional;
 public interface ProductService {
   //  Operaciones CRUD
   ProductDTO createProduct(ProductDTO productDTO);
+  ProductDTO createProduct(ProductDTO productDTO, org.springframework.web.multipart.MultipartFile imageFile) throws Exception;
+  // update product image by id
+  ProductDTO updateProductImage(Long id, org.springframework.web.multipart.MultipartFile imageFile) throws Exception;
   Optional<ProductDTO> getProductById(Long id);
   //  getAllProducts
   List<ProductDTO> getAllProducts();

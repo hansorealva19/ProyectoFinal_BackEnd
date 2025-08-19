@@ -43,15 +43,16 @@ public class ProductController {
   //  POST /api/products
 //  Principio: HTTP Post - Crear un nuevo recurso
 //  crear un producto
-  @PostMapping
+  @PostMapping(consumes = {"multipart/form-data"})
   public ResponseEntity<ProductDTO> createProduct(
-    @Valid @RequestBody ProductDTO productDTO
+    @Valid @RequestPart("product") ProductDTO productDTO,
+    @RequestPart(value = "image", required = false) org.springframework.web.multipart.MultipartFile image
   ) {
     log.info("Creating product: {}", productDTO);
 
     try {
 //      crear el producto y responder con el ResponseEntity
-      ProductDTO createdProduct = productService.createProduct(productDTO);
+      ProductDTO createdProduct = image == null ? productService.createProduct(productDTO) : productService.createProduct(productDTO, image);
       return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
     } catch (Exception e) {
       log.error("Error creating product: {}", e.getMessage());
@@ -146,6 +147,25 @@ public class ProductController {
       return ResponseEntity.notFound().build();
     } catch (Exception e) {
       log.error("Error deleting product: {}", e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+  }
+
+  //  actualizar solo la imagen de un producto
+  @PutMapping(path = "/{id}/image", consumes = {"multipart/form-data"})
+  public ResponseEntity<ProductDTO> updateProductImage(
+    @PathVariable("id") Long id,
+    @RequestPart(value = "image", required = true) org.springframework.web.multipart.MultipartFile image
+  ) {
+    log.info("Updating image for product id: {}", id);
+    try {
+      ProductDTO updated = productService.updateProductImage(id, image);
+      return ResponseEntity.ok(updated);
+    } catch (RuntimeException e) {
+      log.error("Error updating product image: {}", e.getMessage());
+      return ResponseEntity.notFound().build();
+    } catch (Exception e) {
+      log.error("Error updating product image: {}", e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
   }

@@ -78,3 +78,10 @@ management:
         health:
             show-details: always
             enabled: true
+
+# Cloudinary configuration (moved from application.properties)
+cloudinary:
+  cloud-name: dqixr8zcs
+  api-key: 539793398796523
+  api-secret: lKp05815lN7U2XtRWSvvnngGULs
+  folder: products

@@ -5,6 +5,10 @@ import com.ecommerce.frontend.model.LoginResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Cookie;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.User;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,8 +74,14 @@ public class AuthController {
                 session.setAttribute("JWT", lr.getToken());
                 session.setAttribute("USERNAME", lr.getUsername());
                 session.setAttribute("ROLE", lr.getRole());
+
+                // also set Spring Security context so subsequent controller checks work immediately
+                User principal = new User(lr.getUsername(), "", Collections.emptyList());
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(auth);
+
                 log.info("Login OK para {} con rol {}", lr.getUsername(), lr.getRole());
-                return "redirect:/home";
+                return "redirect:/products";
             } else {
                 String msg = "Usuario o contraseña incorrectos o backend no responde.";
                 // store one-time error in session and redirect so GET /login can consume it (avoids persistent ?error on refresh)

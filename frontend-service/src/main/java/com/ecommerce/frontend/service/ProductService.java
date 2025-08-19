@@ -22,6 +22,18 @@ public class ProductService {
         return productRestService.getAllProducts(page, size, name, category, jwt);
     }
 
+        public ProductViewModel getProduct(Long id, String jwt) {
+            return productRestService.getProductById(id, jwt);
+        }
+
+        public ProductViewModel updateProduct(Long id, ProductViewModel dto, String jwt) {
+            return productRestService.updateProduct(id, dto, jwt);
+        }
+
+        public ProductViewModel updateProductImage(Long id, org.springframework.web.multipart.MultipartFile image, String jwt) {
+            return productRestService.updateProductImage(id, image, jwt);
+        }
+
     /**
      * Returns a list of available category names by calling the product-service stats endpoint.
      */
