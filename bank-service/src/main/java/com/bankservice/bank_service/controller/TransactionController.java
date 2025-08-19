@@ -24,6 +24,17 @@ public class TransactionController {
         return transactionService.create(transaction);
     }
 
+    // New: accept a transfer DTO (fromAccountId/toAccountId) and perform balance updates
+    @PostMapping("/transfer")
+    public org.springframework.http.ResponseEntity<?> transfer(@RequestBody com.bankservice.bank_service.dto.TransactionDTO dto) {
+        try {
+            transactionService.transfer(dto);
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("status","ok"));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.status(400).body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}")
     public Transaction getById(@PathVariable Long id) {
         return transactionService.getById(id);

@@ -5,22 +5,29 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
+import java.util.Date;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.nio.charset.StandardCharsets;
 
 @Component
 public class JwtTokenProvider {
-    @Value("${jwt.secret:SecretKey1234567890}")
+    @Value("${JWT_SECRET:${jwt.secret:SecretKey1234567890}}")
     private String jwtSecret;
 
     @Value("${jwt.expiration:86400000}")
     private long jwtExpirationInMs;
 
-    private Key getSigningKey() {
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        return new SecretKeySpec(keyBytes, 0, keyBytes.length, "HmacSHA512");
+    private javax.crypto.SecretKey secretKey;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        try {
+            this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        } catch (io.jsonwebtoken.security.WeakKeyException wke) {
+            org.slf4j.LoggerFactory.getLogger(JwtTokenProvider.class).warn("Configured JWT secret is too weak, generating a secure random key for this run. Set a longer JWT_SECRET to avoid this.");
+            this.secretKey = io.jsonwebtoken.security.Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
+        }
     }
 
     public String generateToken(String username) {
@@ -31,23 +38,23 @@ public class JwtTokenProvider {
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public String getUsernameFromJWT(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+    Claims claims = Jwts.parserBuilder()
+        .setSigningKey(secretKey)
+        .build()
+        .parseClaimsJws(token)
+        .getBody();
         return claims.getSubject();
     }
 
     public boolean validateToken(String authToken) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
+                    .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(authToken);
             return true;

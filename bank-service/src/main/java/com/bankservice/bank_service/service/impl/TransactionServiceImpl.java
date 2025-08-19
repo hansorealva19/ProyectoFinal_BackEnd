@@ -47,8 +47,25 @@ public class TransactionServiceImpl implements TransactionService {
             transactionRepository.save(transaction);
         } else {
             // Transferencia normal entre cuentas del mismo banco
-            Account to = accountRepository.findById(dto.getToAccountId())
-                    .orElseThrow(() -> new RuntimeException("Cuenta destino no encontrada"));
+            Account to = null;
+            try {
+                to = accountRepository.findById(dto.getToAccountId())
+                        .orElse(null);
+            } catch (Exception ex) {
+                to = null;
+            }
+            // Fallback: if not found by id, try find by accountNumber (caller might have sent accountNumber digits)
+            if (to == null) {
+                try {
+                    String possibleNumber = String.valueOf(dto.getToAccountId());
+                    to = accountRepository.findByAccountNumber(possibleNumber).orElse(null);
+                } catch (Exception ex) {
+                    to = null;
+                }
+            }
+            if (to == null) {
+                throw new RuntimeException("Cuenta destino no encontrada");
+            }
 
             if (from.getBalance().compareTo(dto.getAmount()) < 0) {
                 throw new RuntimeException("Saldo insuficiente");

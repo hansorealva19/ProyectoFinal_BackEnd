@@ -1,0 +1,80 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: "product-service"
+
+  # configuracion de base de datos
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommerce_products?useSSL=false&createDatabaseIfNotExist=true&serverTimezone=America/Lima
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        use_sql_comments: true
+# significa: no inicializar la base de datos hasta que se haya completado la configuración de Eureka
+        defer-datasource-initialization: true
+
+#    sql:
+#        init:
+#            mode: always
+#            data-location: classpath:data.sql
+
+    devtools:
+        restart:
+            enabled: true # desactivar el reinicio automático de la aplicación
+        livereload:
+            enabled: true # activar el recargado automático de la aplicación
+
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# JWT secret (read from env JWT_SECRET or fallback to the user-service default)
+jwt:
+  secret: ${JWT_SECRET:Ue7d9Kj4QpLmZ8sR2xvTgH5yVbNc1fR0wYz3AaPqS6tHjK9L}
+
+# Configuracion de logging
+loggin:
+  file:
+    name: logs/product-service.log
+  level:
+    com.ecommerce.product: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} - [%thread] %-5level %logger{36}   - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# CONFIGURACION DE ACTUATOR
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,eureka,prometheus
+      base-path: /actuator
+    info:
+      env:
+        enabled: true
+    endpoint:
+        health:
+            show-details: always
+            enabled: true

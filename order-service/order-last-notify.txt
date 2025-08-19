@@ -1,0 +1,3 @@
+signature=yHN/cvAJpmSIeBxdHHkjSuggmG9ykbw1q//sKQDJsVI=
+rawPayload=
+{"orderId":15,"paymentId":"sim-1755551791410","message":"Simulated payment OK","status":"SUCCESS"}

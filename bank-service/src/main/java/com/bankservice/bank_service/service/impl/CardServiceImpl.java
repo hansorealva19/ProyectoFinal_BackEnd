@@ -4,7 +4,9 @@ package com.bankservice.bank_service.service.impl;
 import com.bankservice.bank_service.dto.CardChargeRequest;
 import com.bankservice.bank_service.dto.CardChargeResponse;
 import com.bankservice.bank_service.entity.Card;
+import com.bankservice.bank_service.entity.Account;
 import com.bankservice.bank_service.repository.CardRepository;
+import com.bankservice.bank_service.repository.AccountRepository;
 import com.bankservice.bank_service.entity.Transaction;
 import com.bankservice.bank_service.repository.TransactionRepository;
 import com.bankservice.bank_service.service.CardService;
@@ -20,6 +22,7 @@ import java.time.LocalDate;
 public class CardServiceImpl implements CardService {
     private final CardRepository cardRepository;
     private final TransactionRepository transactionRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     @Transactional
@@ -67,14 +70,45 @@ public class CardServiceImpl implements CardService {
         } else {
             desc = cardInfo;
         }
-        Transaction transaction = Transaction.builder()
-                .fromAccount(card.getAccount())
-                .toAccount(null) // Pago con tarjeta, no hay cuenta destino
-                .amount(request.getAmount())
-                .description(desc)
-                .timestamp(java.time.LocalDateTime.now())
-                .build();
-        transactionRepository.save(transaction);
+
+        // If toAccountId is provided, credit that account (merchant)
+        if (request.getToAccountId() != null) {
+            Account toAcc = null;
+            try {
+                toAcc = accountRepository.findById(request.getToAccountId()).orElse(null);
+            } catch (Exception ex) {
+                toAcc = null;
+            }
+            if (toAcc == null) {
+                try {
+                    String possibleNumber = String.valueOf(request.getToAccountId());
+                    toAcc = accountRepository.findByAccountNumber(possibleNumber).orElse(null);
+                } catch (Exception ex) {
+                    toAcc = null;
+                }
+            }
+            if (toAcc != null) {
+                toAcc.setBalance(toAcc.getBalance().add(request.getAmount()));
+                accountRepository.save(toAcc);
+            }
+            Transaction transaction = Transaction.builder()
+                    .fromAccount(card.getAccount())
+                    .toAccount(toAcc)
+                    .amount(request.getAmount())
+                    .description(desc)
+                    .timestamp(java.time.LocalDateTime.now())
+                    .build();
+            transactionRepository.save(transaction);
+        } else {
+            Transaction transaction = Transaction.builder()
+                    .fromAccount(card.getAccount())
+                    .toAccount(null) // Pago con tarjeta, no hay cuenta destino
+                    .amount(request.getAmount())
+                    .description(desc)
+                    .timestamp(java.time.LocalDateTime.now())
+                    .build();
+            transactionRepository.save(transaction);
+        }
         return new CardChargeResponse(true, "Pago realizado correctamente");
     }
 }

@@ -1,0 +1,32 @@
+<!-- Footer fragment -->
+<div th:fragment="footer">
+
+  <footer class="site-footer bg-light text-muted shadow-sm">
+    <div class="container-fluid py-4">
+      <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-5 mb-3 mb-md-0">
+          <h5 class="text-uppercase fw-bold mb-2">EcommercePro</h5>
+          <p class="mb-0">Tu tienda profesional, segura y moderna. Mucho mejor que Shopify.</p>
+        </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+          <h6 class="text-uppercase fw-bold">Enlaces</h6>
+          <ul class="list-unstyled mb-0">
+            <li><a href="/products">Catálogo</a></li>
+            <li><a href="/cart">Carrito</a></li>
+            <li><a href="/orders">Pedidos</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 text-md-end">
+          <h6 class="text-uppercase fw-bold">Contacto</h6>
+          <p class="mb-0"><a href="mailto:info@ecommercepro.com">info@ecommercepro.com</a><br/>+51 999 999 999</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-dark text-white text-center py-2">
+      <div class="container">© 2025 EcommercePro. Todos los derechos reservados.</div>
+    </div>
+  </footer>
+</div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+

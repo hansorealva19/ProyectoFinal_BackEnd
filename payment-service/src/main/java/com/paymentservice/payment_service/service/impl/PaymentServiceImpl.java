@@ -23,6 +23,8 @@ public class PaymentServiceImpl implements PaymentService {
     private static final Logger logger = LoggerFactory.getLogger(PaymentServiceImpl.class);
     private final PaymentRepository paymentRepository;
     private final PaymentEventPublisher paymentEventPublisher;
+    @org.springframework.beans.factory.annotation.Value("${payment.merchant.accountId:}")
+    private String merchantAccountId;
 
     @Override
     public List<Payment> findAll() {
@@ -39,17 +41,46 @@ public class PaymentServiceImpl implements PaymentService {
     @CircuitBreaker(name = "paymentService", fallbackMethod = "fallbackProcessPayment")
     public PaymentResponseDTO processPayment(PaymentRequestDTO requestDTO) {
         logger.info("Processing payment: {}", requestDTO);
+        String payer = requestDTO.getPayerAccount() != null ? requestDTO.getPayerAccount() : "";
+        String payee = requestDTO.getPayeeAccount();
+        if ((payee == null || payee.isBlank()) && merchantAccountId != null && !merchantAccountId.isBlank()) {
+            payee = merchantAccountId;
+        }
         Payment payment = Payment.builder()
-                .payerAccount(requestDTO.getPayerAccount())
-                .payeeAccount(requestDTO.getPayeeAccount())
+                .payerAccount(payer)
+                .payeeAccount(payee != null ? payee : "")
                 .amount(requestDTO.getAmount())
                 .currency(requestDTO.getCurrency())
                 .status("PENDING")
                 .createdAt(LocalDateTime.now())
                 .description(requestDTO.getDescription())
                 .build();
-        payment = paymentRepository.save(payment);
-        paymentEventPublisher.publishPaymentEvent(payment);
+    payment = paymentRepository.save(payment);
+    final Payment publishedPayment = payment;
+        // Publish event only after the surrounding transaction commits to avoid inconsistency
+        try {
+            if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                    try {
+                                        paymentEventPublisher.publishPaymentEvent(publishedPayment);
+                                    } catch (Exception e) {
+                                        logger.warn("Failed to publish payment event after commit: {}", e.getMessage());
+                                    }
+                            }
+                        }
+                );
+            } else {
+                // no transaction active, publish immediately
+                paymentEventPublisher.publishPaymentEvent(payment);
+            }
+        } catch (Exception ex) {
+            logger.warn("Error registering transaction synchronization for payment event: {}", ex.getMessage());
+            // fallback: try to publish now
+            try { paymentEventPublisher.publishPaymentEvent(payment); } catch (Exception e) { logger.warn("Fallback publish failed: {}", e.getMessage()); }
+        }
         logger.info("Payment saved and event published: {}", payment);
         return PaymentResponseDTO.builder()
                 .id(payment.getId())

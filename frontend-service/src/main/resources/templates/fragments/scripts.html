@@ -1,0 +1,21 @@
+<!-- Scripts fragment -->
+<div th:fragment="scripts">
+  <!-- Bootstrap JS (Popper included) - required for dropdowns, modals, etc. -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-3mN6Y9m+qQmX9l5WJ3k5lQ6QF3xZp5KJ2A9nQ2sE1F3b6k9Q" crossorigin="anonymous"></script>
+  <script>
+    // Ensure main content fills the viewport so footer stays at the bottom.
+    function adjustMainMinHeight(){
+      try{
+        var header = document.querySelector('nav.navbar');
+        var footer = document.querySelector('footer.site-footer');
+        var main = document.querySelector('.main-container');
+        if(!main) return;
+        var headerH = header ? Math.ceil(header.getBoundingClientRect().height) : 0;
+        var footerH = footer ? Math.ceil(footer.getBoundingClientRect().height) : 0;
+        main.style.minHeight = 'calc(100vh - ' + (headerH + footerH) + 'px)';
+      }catch(e){ console.debug('adjustMainMinHeight error', e); }
+    }
+    window.addEventListener('load', adjustMainMinHeight);
+    window.addEventListener('resize', function(){ setTimeout(adjustMainMinHeight,50); });
+  </script>
+</div>

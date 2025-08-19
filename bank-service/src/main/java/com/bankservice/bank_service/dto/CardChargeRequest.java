@@ -11,4 +11,5 @@ public class CardChargeRequest {
     private String expirationDate; // formato: yyyy-MM-dd
     private BigDecimal amount;
     private String description; // descripción opcional del pago
+    private Long toAccountId; // optional: credit this account when charging the card
 }

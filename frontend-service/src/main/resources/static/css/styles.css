@@ -1,0 +1,149 @@
+:root{
+    --primary-1: #5b6cff;
+    --primary-2: #2fb5ff;
+    --muted: #6c757d;
+}
+
+body {
+        background: #f7f7f8;
+        font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+        color: #222;
+        margin:0;
+}
+
+.card {
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    background: #fff;
+    border: none;
+}
+
+.card-header {
+    border-radius: 18px 18px 0 0;
+    background: linear-gradient(90deg, #6c63ff 0%, #48c6ef 100%);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.btn-primary, .btn-success {
+    border-radius: 8px;
+    font-weight: 500;
+    background: linear-gradient(90deg, #6c63ff 0%, #48c6ef 100%);
+    border: none;
+    transition: box-shadow 0.2s;
+}
+
+.btn-primary:hover, .btn-success:hover {
+    box-shadow: 0 2px 8px rgba(76, 110, 245, 0.15);
+    background: linear-gradient(90deg, #48c6ef 0%, #6c63ff 100%);
+}
+
+input, select, textarea {
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    background: #f8f8fa;
+    color: #222;
+}
+
+.navbar-custom{
+    background: linear-gradient(90deg,var(--primary-1),var(--primary-2)) !important;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 6px 18px rgba(91,108,255,0.12);
+}
+.navbar-custom .navbar-brand{ font-weight:700; font-size:1.4rem; color:#fff !important; }
+.navbar-custom .nav-link{ color: rgba(255,255,255,0.95) !important; margin-right:1rem; }
+.navbar-custom .nav-link:hover{ color:#fff !important; }
+
+/* Right side navbar (profile/logout) alignment and styles */
+.navbar-custom .navbar-nav:last-child { display:flex; align-items:center; gap:0.6rem; }
+.navbar-custom .nav-link { padding: 0.5rem 0.6rem; }
+.navbar-custom .btn-link.nav-link { color: rgba(255,255,255,0.95); text-decoration: none; }
+.navbar-custom .btn-link.nav-link:hover { text-decoration: underline; color: #fff; }
+
+/* Footer visual polish */
+.site-footer { padding-top: 2.5rem; padding-bottom: 1rem; background: #f8f9fa; }
+.site-footer .container { align-items: flex-start; }
+.site-footer p { color: var(--muted); margin-bottom: 0.6rem; }
+.site-footer .list-unstyled a { display: block; margin-bottom: 0.35rem; }
+.site-footer .bg-dark { background:#222; margin-top: 1.5rem; }
+.site-footer .bg-dark .container { padding-top:0.4rem; padding-bottom:0.4rem; }
+
+.site-footer { padding-top: 1.25rem; padding-bottom: 0.75rem; background: #f8f9fa; }
+.site-footer .container { --footer-container: initial; }
+.site-footer h5, .site-footer h6 { font-weight: 700; color: #212529; margin-bottom: 0.5rem; }
+.site-footer p { color: var(--muted); margin-bottom: 0.4rem; line-height: 1.5; }
+.site-footer .list-unstyled { padding: 0; margin: 0; }
+.site-footer .list-unstyled a { color: #495057; display: block; margin-bottom: 0.35rem; transition: color .12s ease; }
+.site-footer .list-unstyled a:hover { color: var(--primary-1); text-decoration: none; }
+.site-footer .contact a { color: var(--primary-1); font-weight: 600; }
+
+/* Center footer columns on wide screens while keeping bootstrap grid semantics */
+.site-footer .row { display: flex; justify-content: center; gap: 2rem; align-items: flex-start; }
+.site-footer .col-md-5, .site-footer .col-md-4, .site-footer .col-md-3 { max-width: 360px; }
+
+@media (max-width: 768px) {
+    .site-footer { text-align: center; }
+    .site-footer .list-unstyled a { display: inline-block; }
+}
+
+/* Center text in the dark bar */
+.site-footer .bg-dark .container { text-align: center; padding-top:0.4rem; padding-bottom:0.4rem; }
+
+/* Footer adjustments handled via fragment .site-footer */
+.site-footer{ margin-top:2.5rem; }
+.site-footer .bg-dark{ background:#222 !important; }
+.site-footer .text-white{ color:#fff !important; }
+.site-footer a{ color: #343a40; }
+.site-footer a:hover{ color: var(--primary-1); }
+
+::-webkit-scrollbar {
+    width: 8px;
+    background: #e0e0e0;
+}
+::-webkit-scrollbar-thumb { background: var(--primary-1); border-radius:8px; }
+
+/* Sticky footer helpers moved from fragments/footer.html */
+html, body { height: 100%; }
+body { display: flex; flex-direction: column; min-height: 100vh; }
+/* Ensure main content expands. Use .main-container to avoid affecting footer inner containers */
+.main-container { flex: 1 0 auto; display: block; }
+.main-container { padding-top: 1.5rem; padding-bottom: 1rem; }
+.main-container { min-height: calc(100vh - 220px); }
+.form-row-top { margin-top: 0.8rem; }
+.site-footer .container { flex: 0 0 auto; }
+.site-footer { margin-top: auto; }
+.site-footer a { color: rgba(0,0,0,0.8); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+
+/* Footer handled via flexbox: it will sit at the bottom when content is short
+    without using position:fixed which can overlap content. If you need a
+    fixed footer overlay, reintroduce position:fixed and add bottom padding. */
+
+/* Profile page styles */
+.profile-page .card { max-width: 720px; margin: 0 auto; border-radius: 12px; }
+.profile-page .card-header { background: linear-gradient(90deg,var(--primary-1),var(--primary-2)); color: #fff; }
+.profile-page .form-label { font-weight: 600; }
+.profile-page .btn-primary { padding: 0.45rem 0.9rem; }
+
+/* Footer column layout improvements */
+/* ensure footer row is centered using Bootstrap container */
+.site-footer .row { display: flex; justify-content: center; gap: 2rem; align-items: flex-start; }
+/* no extra overrides for .site-footer container - rely on bootstrap grid */
+
+.site-footer {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    border-top: 1px solid #e0e0e0;
+    background: #f8f9fa;
+    box-sizing: border-box;
+}
+
+.site-footer .container {
+    max-width: 1200px;
+    margin: 0 auto;
+}

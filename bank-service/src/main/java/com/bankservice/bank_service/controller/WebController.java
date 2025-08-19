@@ -41,6 +41,7 @@ public class WebController {
     private final CardService cardService;
     private final UserRepository userRepository;
     private final CardRepository cardRepository;
+    private final com.bankservice.bank_service.repository.MerchantRepository merchantRepository;
     private final PasswordEncoder passwordEncoder;
     @PostMapping("/cards/{cardId}/delete")
     public String deleteCard(
@@ -497,5 +498,46 @@ public class WebController {
     @GetMapping("/")
     public String home() {
         return "redirect:/login";
+    }
+
+    // Admin helper: create a demo buyer account (if missing) and transfer funds to merchant 'ecommerce'
+    @PostMapping("/admin/demo/pay-ecommerce")
+    @ResponseBody
+    public java.util.Map<String,Object> demoPayEcommerce(@RequestParam(defaultValue = "100") java.math.BigDecimal amount) {
+        try {
+            // ensure merchant exists
+            var m = merchantRepository.findByMerchantCode("ecommerce");
+            if (m.isEmpty()) return java.util.Map.of("error","merchant ecommerce not found");
+            Long merchantAccountId = m.get().getAccountId();
+
+            // ensure buyer account with accountNumber 1000000001 exists
+            String buyerNumber = "1000000001";
+            var buyerOpt = accountService.getAllAccounts().stream().filter(a -> buyerNumber.equals(a.getAccountNumber())).findFirst();
+            Long buyerId;
+            if (buyerOpt.isEmpty()) {
+                com.bankservice.bank_service.dto.AccountDTO newAcc = new com.bankservice.bank_service.dto.AccountDTO();
+                newAcc.setUserId(9999L);
+                newAcc.setAccountNumber(buyerNumber);
+                newAcc.setBalance(amount.add(new java.math.BigDecimal("10"))); // seed with slightly more
+                newAcc.setBankCode("MIBANK");
+                newAcc.setBankName("Mi Banco");
+                var created = accountService.createAccount(newAcc);
+                buyerId = created.getId();
+            } else {
+                buyerId = buyerOpt.get().getId();
+            }
+
+            // create the transaction DTO and perform transfer
+            com.bankservice.bank_service.dto.TransactionDTO tx = new com.bankservice.bank_service.dto.TransactionDTO();
+            tx.setFromAccountId(buyerId);
+            tx.setToAccountId(merchantAccountId);
+            tx.setAmount(amount);
+            tx.setDescription("Demo payment to ecommerce merchant");
+            transactionService.transfer(tx);
+
+            return java.util.Map.of("status","ok","buyerId",buyerId,"merchantAccountId",merchantAccountId,"amount",amount);
+        } catch (Exception e) {
+            return java.util.Map.of("error", e.getMessage());
+        }
     }
 }

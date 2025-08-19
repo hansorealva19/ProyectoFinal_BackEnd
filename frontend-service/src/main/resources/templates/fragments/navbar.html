@@ -1,0 +1,29 @@
+<!-- Navbar fragment -->
+<!-- Inline favicon to avoid browser requesting /favicon.ico and returning 403 -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23007bff'/%3E%3Ctext x='4' y='12' font-size='10' fill='white'%3EE%3C/text%3E%3C/svg%3E" />
+<nav class="navbar navbar-expand-lg navbar-custom" th:fragment="navbar">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="/">EcommercePro</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="/products">Catálogo</a></li>
+        <li class="nav-item"><a class="nav-link" href="/cart">Carrito</a></li>
+        <li class="nav-item"><a class="nav-link" href="/orders">Pedidos</a></li>
+        <li class="nav-item"><a class="nav-link" href="/audit">Auditoría</a></li>
+      </ul>
+      <ul class="navbar-nav mb-2 mb-lg-0">
+  <li class="nav-item" th:if="${session.USERNAME != null}"><a class="nav-link" href="/profile">Perfil</a></li>
+  <li class="nav-item" th:if="${session.USERNAME != null}">
+    <form th:action="@{/logout}" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-link nav-link" style="display:inline;padding:0;border:none;background:none;">Salir</button>
+    </form>
+  </li>
+  <li class="nav-item" th:if="${session.USERNAME == null}"><a class="nav-link" href="/login">Ingresar</a></li>
+  <li class="nav-item" th:if="${session.USERNAME == null}"><a class="nav-link" href="/register">Registrarse</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
