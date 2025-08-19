@@ -17,7 +17,7 @@
       <ul class="navbar-nav mb-2 mb-lg-0">
   <li class="nav-item" th:if="${session.USERNAME != null}"><a class="nav-link" href="/profile">Perfil</a></li>
   <li class="nav-item" th:if="${session.USERNAME != null}">
-    <form th:action="@{/logout}" method="post" style="display:inline;">
+    <form th:action="@{/logout}" method="post" style="display:inline;" onsubmit="try{ window.ECOM_AUTH_GUARD && window.ECOM_AUTH_GUARD.markLoggedOut(); }catch(e){}">
       <button type="submit" class="btn btn-link nav-link" style="display:inline;padding:0;border:none;background:none;">Salir</button>
     </form>
   </li>

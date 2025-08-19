@@ -58,5 +58,6 @@
 <div th:unless="${isLogged}">
     <p>No tienes permisos para editar este producto. <a th:href="@{/login}">Inicia sesión</a></p>
 </div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

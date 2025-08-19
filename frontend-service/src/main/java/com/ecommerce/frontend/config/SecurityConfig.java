@@ -24,13 +24,18 @@ public class SecurityConfig {
                         // Público: estáticos, login, register
                         .requestMatchers("/favicon.ico", "/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
 
-                        // Listado y detalle de productos públicos
-                        // NOTA: "/products/*" cubre "/products/{id}" pero NO cubre "/products/{id}/edit"
-                        .requestMatchers(HttpMethod.GET, "/products", "/products/*").permitAll()
+                        // Todos los endpoints de la aplicación requieren autenticación.
+                        // Quitamos la regla que permitía públicamente /products y /products/{id}
+                        // para forzar login antes de poder ver cualquier contenido.
 
                         // Edición de productos protegida
                         .requestMatchers(HttpMethod.GET, "/products/*/edit").authenticated()
                         .requestMatchers(HttpMethod.POST, "/products/*/edit").authenticated()
+
+                        // Endpoint que usa el guard cliente para comprobar el estado de la sesión
+                        // debe permanecer accesible para que el cliente reciba 401 cuando la
+                        // sesión ha sido invalidada. Mantén esto si usas auth-guard.js.
+                        .requestMatchers("/api/auth/check").permitAll()
 
                         // Usuarios públicos (ajusta según tu caso real)
                         .requestMatchers("/api/users/**").permitAll()
