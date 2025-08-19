@@ -9,6 +9,10 @@ microservices:
     url: http://localhost:8086
 server:
   port: 8090
+  servlet:
+    session:
+      cookie:
+        name: FRONTENDSESSIONID
 spring:
   application:
     name: frontend-service
