@@ -32,12 +32,17 @@ public class SecurityConfig {
             .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // Recursos estáticos
             .anyRequest().authenticated()
         )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .defaultSuccessUrl("/accounts", true)
-                        .permitAll()
-                )
-                .logout(logout -> logout.permitAll())
+        .formLogin(form -> form
+            .loginPage("/login")
+            .defaultSuccessUrl("/accounts", true)
+            .permitAll()
+        )
+        .logout(logout -> logout
+            .logoutUrl("/logout")
+            .invalidateHttpSession(true)
+            .deleteCookies("BANKSESSIONID", "JSESSIONID")
+            .permitAll()
+        )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // Cambiar a IF_REQUIRED para web forms
                 )

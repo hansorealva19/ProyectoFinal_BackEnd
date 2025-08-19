@@ -38,6 +38,8 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/logout-success")
+                .invalidateHttpSession(true)
+                .deleteCookies("PAYMENTSESSIONID", "JSESSIONID")
                 .permitAll()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));

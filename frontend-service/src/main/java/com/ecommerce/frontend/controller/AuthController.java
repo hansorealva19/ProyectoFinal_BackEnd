@@ -3,6 +3,8 @@ package com.ecommerce.frontend.controller;
 import com.ecommerce.frontend.model.LoginRequest;
 import com.ecommerce.frontend.model.LoginResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +30,21 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String login(Model model) {
+    public String login(Model model, HttpSession session,
+                        @RequestParam(required = false) String logout,
+                        @RequestParam(required = false) String registered) {
+        // Consume one-time login error stored in session (prevents the error from persisting on F5)
+        Object oneTimeError = session.getAttribute("LOGIN_ERROR");
+        if (oneTimeError != null) {
+            model.addAttribute("error", oneTimeError.toString());
+            session.removeAttribute("LOGIN_ERROR");
+        }
+        if (logout != null) {
+            model.addAttribute("logout", true);
+        }
+        if (registered != null) {
+            model.addAttribute("registered", true);
+        }
         return "login";
     }
 
@@ -57,14 +73,17 @@ public class AuthController {
                 log.info("Login OK para {} con rol {}", lr.getUsername(), lr.getRole());
                 return "redirect:/home";
             } else {
-                model.addAttribute("error", "Usuario o contraseña incorrectos o backend no responde.");
+                String msg = "Usuario o contraseña incorrectos o backend no responde.";
+                // store one-time error in session and redirect so GET /login can consume it (avoids persistent ?error on refresh)
+                session.setAttribute("LOGIN_ERROR", msg);
                 log.error("Login fallido para usuario: {}. Status: {} Body: {}", username, response.getStatusCode(), response.getBody());
-                return "login";
+                return "redirect:/login?error";
             }
         } catch (Exception e) {
-            model.addAttribute("error", "No se pudo conectar con el backend o la respuesta fue vacía. Intente más tarde.");
+            String msg = "No se pudo conectar con el backend o la respuesta fue vacía. Intente más tarde.";
+            session.setAttribute("LOGIN_ERROR", msg);
             log.error("Excepción en login de usuario: {} - {}", username, e.getMessage());
-            return "login";
+            return "redirect:/login?error";
         }
     }
 
@@ -105,8 +124,22 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public String doLogout(HttpSession session) {
+    public String doLogout(HttpSession session, HttpServletResponse response) {
+        // Invalidate server session
         session.invalidate();
+
+        // Remove the frontend custom session cookie and the default JSESSIONID for safety
+        Cookie frontendCookie = new Cookie("FRONTENDSESSIONID", "");
+        frontendCookie.setPath("/");
+        frontendCookie.setHttpOnly(true);
+        frontendCookie.setMaxAge(0);
+        response.addCookie(frontendCookie);
+
+        Cookie js = new Cookie("JSESSIONID", "");
+        js.setPath("/");
+        js.setMaxAge(0);
+        response.addCookie(js);
+
         // redirect to the frontend login page
         return "redirect:/login?logout";
     }

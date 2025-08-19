@@ -15,16 +15,20 @@ public class SecurityConfig {
                                 http
                                         .csrf(csrf -> csrf.disable())
                                                         .authorizeHttpRequests(auth -> auth
-                                                                .requestMatchers("/", "/home", "/favicon.ico", "/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
-                                                                                                .requestMatchers("/products", "/products/**", "/cart", "/cart/**", "/orders", "/orders/**").permitAll()
-                                                                .requestMatchers("/api/products/**", "/api/users/**").permitAll()
-                                                                .anyRequest().authenticated()
+                                                                // Public: static assets, login and register. Everything else requires authentication.
+                                                                        .requestMatchers("/favicon.ico", "/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+                                                                        .requestMatchers("/api/users/**").permitAll()
+                                                                        .anyRequest().authenticated()
                                                         )
+                                        // Use the custom login page at /login so unauthenticated requests are redirected there
+                                        // but avoid Spring processing POST /login so our AuthController can handle it.
+                                        .formLogin(form -> form.loginPage("/login").loginProcessingUrl("/perform_login").permitAll())
                                         .logout(logout -> logout
                                                 .logoutUrl("/logout")
                                                 .logoutSuccessUrl("/login?logout")
                                                 .invalidateHttpSession(true)
-                                                .deleteCookies("JSESSIONID")
+                                                // delete the custom session cookie name we set in application.yml
+                                                .deleteCookies("FRONTENDSESSIONID")
                                                 .permitAll()
                                         )
                                         .addFilterBefore(new JwtSessionFilter(), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
