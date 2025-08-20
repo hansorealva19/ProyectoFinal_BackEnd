@@ -164,4 +164,146 @@ public class CartRestService {
             throw new RuntimeException("Error al procesar checkout", ex);
         }
     }
+
+    public int getCartCount(String username, String jwt) {
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            if (jwt != null) headers.setBearerAuth(jwt);
+            org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
+            String userIdUrl = userServiceUrl + "/api/users/by-username/" + username;
+            org.springframework.http.ResponseEntity<Long> userResp = restTemplate.exchange(userIdUrl, org.springframework.http.HttpMethod.GET, entity, Long.class);
+            Long userId = userResp.getBody();
+            if (userId == null) return 0;
+            // Use items endpoint and sum quantities to have a consistent 'count' semantics (total quantity)
+            String url = cartServiceUrl + "/api/cart/" + userId + "/items?page=0&size=100";
+            org.springframework.http.ResponseEntity<java.util.Map> resp = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, java.util.Map.class);
+            if (resp.getBody() != null && resp.getBody().containsKey("content")) {
+                java.util.List<?> content = (java.util.List<?>) resp.getBody().get("content");
+                int sum = 0;
+                for (Object o : content) {
+                    if (!(o instanceof java.util.Map)) continue;
+                    java.util.Map m = (java.util.Map) o;
+                    Object q = m.get("quantity");
+                    if (q instanceof Number) sum += ((Number) q).intValue();
+                }
+                return sum;
+            }
+        } catch (Exception ex) {
+            log.debug("Could not obtain cart count: {}", ex.toString());
+        }
+        return 0;
+    }
+
+    public void clearCart(String username, String jwt) {
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            if (jwt != null) headers.setBearerAuth(jwt);
+            org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
+            String userIdUrl = userServiceUrl + "/api/users/by-username/" + username;
+            org.springframework.http.ResponseEntity<Long> userResp = restTemplate.exchange(userIdUrl, org.springframework.http.HttpMethod.GET, entity, Long.class);
+            Long userId = userResp.getBody();
+            if (userId == null) return;
+            String url = cartServiceUrl + "/api/cart/" + userId + "/clear";
+            restTemplate.exchange(url, org.springframework.http.HttpMethod.DELETE, entity, Void.class);
+        } catch (Exception ex) {
+            log.debug("Could not clear cart for user {}: {}", username, ex.toString());
+        }
+    }
+
+    /**
+     * Merge a list of session-stored CartItemViewModel into the remote cart for username.
+     * This is a best-effort operation: it will attempt to add each item and continue on errors.
+     */
+    public void mergeSessionCart(String username, java.util.List<com.ecommerce.frontend.model.CartItemViewModel> items, String jwt) {
+        if (username == null || items == null || items.isEmpty()) return;
+        for (com.ecommerce.frontend.model.CartItemViewModel it : items) {
+            if (it == null) continue;
+            Long pid = it.getProductId();
+            int qty = it.getQuantity();
+            if (pid == null || qty <= 0) continue;
+            try {
+                addToCart(username, pid, qty, jwt);
+            } catch (Exception e) {
+                log.debug("Could not merge item {} qty {} for user {}: {}", pid, qty, username, e.toString());
+            }
+        }
+    }
+
+    // Update quantity for an existing cart item (authenticated users)
+    public void updateCartItemQuantity(String username, Long productId, int quantity, String jwt) {
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            if (jwt != null) headers.setBearerAuth(jwt);
+            org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
+            String userIdUrl = userServiceUrl + "/api/users/by-username/" + username;
+            org.springframework.http.ResponseEntity<Long> userResp = restTemplate.exchange(userIdUrl, org.springframework.http.HttpMethod.GET, entity, Long.class);
+            Long userId = userResp.getBody();
+            if (userId == null) return;
+            // cart-service stores items with generated item ids; we need to find the item id by listing items and matching productId
+            String itemsUrl = cartServiceUrl + "/api/cart/" + userId + "/items";
+            org.springframework.http.ResponseEntity<java.util.Map> resp = restTemplate.exchange(itemsUrl + "?page=0&size=100", org.springframework.http.HttpMethod.GET, entity, java.util.Map.class);
+            if (resp.getBody() == null || !resp.getBody().containsKey("content")) return;
+            java.util.List<?> content = (java.util.List<?>) resp.getBody().get("content");
+            for (Object o : content) {
+                if (!(o instanceof java.util.Map)) continue;
+                java.util.Map map = (java.util.Map) o;
+                Object pid = map.get("productId");
+                if (pid instanceof Number && ((Number) pid).longValue() == productId) {
+                    Object itemIdObj = map.get("id");
+                    Long itemId = itemIdObj instanceof Number ? ((Number) itemIdObj).longValue() : null;
+                    if (itemId == null) return;
+                    if (quantity <= 0) {
+                        String delUrl = cartServiceUrl + "/api/cart/" + userId + "/items/" + itemId;
+                        restTemplate.exchange(delUrl, org.springframework.http.HttpMethod.DELETE, entity, Void.class);
+                        return;
+                    } else {
+                        // To change quantity, remove and re-add with new quantity (cart-service addItem just appends, so we remove then add with desired quantity)
+                        String delUrl = cartServiceUrl + "/api/cart/" + userId + "/items/" + itemId;
+                        restTemplate.exchange(delUrl, org.springframework.http.HttpMethod.DELETE, entity, Void.class);
+                        java.util.Map<String,Object> addBody = new java.util.HashMap<>();
+                        addBody.put("productId", productId);
+                        addBody.put("quantity", quantity);
+                        org.springframework.http.HttpEntity<Object> addEntity = new org.springframework.http.HttpEntity<>(addBody, headers);
+                        String addUrl = cartServiceUrl + "/api/cart/" + userId + "/items";
+                        restTemplate.exchange(addUrl, org.springframework.http.HttpMethod.POST, addEntity, java.util.Map.class);
+                        return;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            log.debug("Could not update cart item quantity: {}", ex.toString());
+        }
+    }
+
+    // Remove item for authenticated user by productId (helper)
+    public void removeItemByProductId(String username, Long productId, String jwt) {
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            if (jwt != null) headers.setBearerAuth(jwt);
+            org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
+            String userIdUrl = userServiceUrl + "/api/users/by-username/" + username;
+            org.springframework.http.ResponseEntity<Long> userResp = restTemplate.exchange(userIdUrl, org.springframework.http.HttpMethod.GET, entity, Long.class);
+            Long userId = userResp.getBody();
+            if (userId == null) return;
+            String itemsUrl = cartServiceUrl + "/api/cart/" + userId + "/items";
+            org.springframework.http.ResponseEntity<java.util.Map> resp = restTemplate.exchange(itemsUrl + "?page=0&size=100", org.springframework.http.HttpMethod.GET, entity, java.util.Map.class);
+            if (resp.getBody() == null || !resp.getBody().containsKey("content")) return;
+            java.util.List<?> content = (java.util.List<?>) resp.getBody().get("content");
+            for (Object o : content) {
+                if (!(o instanceof java.util.Map)) continue;
+                java.util.Map map = (java.util.Map) o;
+                Object pid = map.get("productId");
+                if (pid instanceof Number && ((Number) pid).longValue() == productId) {
+                    Object itemIdObj = map.get("id");
+                    Long itemId = itemIdObj instanceof Number ? ((Number) itemIdObj).longValue() : null;
+                    if (itemId == null) return;
+                    String delUrl = cartServiceUrl + "/api/cart/" + userId + "/items/" + itemId;
+                    restTemplate.exchange(delUrl, org.springframework.http.HttpMethod.DELETE, entity, Void.class);
+                    return;
+                }
+            }
+        } catch (Exception ex) {
+            log.debug("Could not remove cart item: {}", ex.toString());
+        }
+    }
 }

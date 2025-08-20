@@ -46,8 +46,24 @@ public class CartServiceImpl implements CartService {
         item.setProductName(product.getName());
         item.setUnitPrice(product.getPrice());
     item.setProductCategory(product.getCategory());
-        item.setSubtotal(product.getPrice() * item.getQuantity());
-        cart.getItems().add(item);
+        // If the cart already contains the same productId, merge quantities instead of adding a duplicate entry
+        boolean merged = false;
+        if (cart.getItems() != null) {
+            for (CartItem existing : cart.getItems()) {
+                if (existing.getProductId() != null && existing.getProductId().equals(item.getProductId())) {
+                    int newQty = existing.getQuantity() + item.getQuantity();
+                    existing.setQuantity(newQty);
+                    existing.setUnitPrice(product.getPrice());
+                    existing.setSubtotal(product.getPrice() * newQty);
+                    merged = true;
+                    break;
+                }
+            }
+        }
+        if (!merged) {
+            item.setSubtotal(product.getPrice() * item.getQuantity());
+            cart.getItems().add(item);
+        }
         cart.setTotal(cart.getItems().stream().mapToDouble(CartItem::getSubtotal).sum());
         return cartRepository.save(cart);
     }
@@ -148,5 +164,12 @@ public class CartServiceImpl implements CartService {
         int end = Math.min((start + pageable.getPageSize()), items.size());
         List<CartItem> pagedItems = items.subList(start, end);
         return new org.springframework.data.domain.PageImpl<>(pagedItems, pageable, items.size());
+    }
+
+    @Override
+    public int getCount(Long userId) {
+        return cartRepository.findByUserId(userId)
+                .map(c -> c.getItems() != null ? c.getItems().size() : 0)
+                .orElse(0);
     }
 }

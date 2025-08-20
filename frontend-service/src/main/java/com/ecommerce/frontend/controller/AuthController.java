@@ -28,9 +28,11 @@ public class AuthController {
     private String userServiceUrl;
 
     private final RestTemplate restTemplate;
+    private final com.ecommerce.frontend.service.CartService cartService;
 
-    public AuthController(RestTemplate restTemplate) {
+    public AuthController(RestTemplate restTemplate, com.ecommerce.frontend.service.CartService cartService) {
         this.restTemplate = restTemplate;
+        this.cartService = cartService;
     }
 
     @GetMapping("/login")
@@ -81,6 +83,19 @@ public class AuthController {
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
                 log.info("Login OK para {} con rol {}", lr.getUsername(), lr.getRole());
+
+                // If there was a session cart for anonymous user, merge it into the user's persistent cart
+                try {
+                    java.util.List<com.ecommerce.frontend.model.CartItemViewModel> sessionItems = (java.util.List<com.ecommerce.frontend.model.CartItemViewModel>) session.getAttribute("SESSION_CART");
+                    if (sessionItems != null && !sessionItems.isEmpty()) {
+                        cartService.mergeSessionCart(lr.getUsername(), sessionItems, lr.getToken());
+                        // remove session cart after successful merge attempt
+                        session.removeAttribute("SESSION_CART");
+                    }
+                } catch (Exception e) {
+                    log.debug("Could not merge session cart after login for {}: {}", lr.getUsername(), e.toString());
+                }
+
                 return "redirect:/products";
             } else {
                 String msg = "Usuario o contraseña incorrectos o backend no responde.";

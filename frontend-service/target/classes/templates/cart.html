@@ -20,26 +20,46 @@
                     <th>Producto</th>
                     <th>Categoría</th>
                     <th>Precio</th>
-                    <th>Cantidad</th>
+                    <th style="width:150px;">Cantidad</th>
                     <th>Total</th>
+                    <th></th>
                 </tr>
                 </thead>
                 <tbody>
                 <!-- Iterar productos del carrito -->
-                <tr th:each="item : ${cartItems}">
-                    <td th:text="${item.product.name}">Producto</td>
-                    <td th:text="${item.product.category != null && item.product.category != '' ? item.product.category : 'Sin categoría'}">Categoría</td>
-                    <td th:text="${item.product.price != null ? 'S/ ' + #numbers.formatDecimal(item.product.price, 1, 'POINT', 2, 'COMMA') : 'S/ 0.00'}">S/ 0.00</td>
-                    <td th:text="${item.quantity}">1</td>
-                    <td th:text="${item.total != null ? 'S/ ' + #numbers.formatDecimal(item.total, 1, 'POINT', 2, 'COMMA') : 'S/ 0.00'}">S/ 0.00</td>
+                <tr th:each="item : ${cartItems}" th:attr="data-pid=${item.productId}">
+                    <td>
+                        <div><strong th:text="${item.product != null ? item.product.name : 'Producto'}">Producto</strong></div>
+                    </td>
+                    <td th:text="${item.product != null && item.product.category != null && item.product.category != '' ? item.product.category : 'Sin categoría'}">Categoría</td>
+                    <td th:text="${item.product != null && item.product.price != null ? 'S/ ' + #numbers.formatDecimal(item.product.price, 1, 'POINT', 2, 'COMMA') : 'S/ 0.00'}">S/ 0.00</td>
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <button class="btn btn-outline-secondary cart-dec-btn" type="button">−</button>
+                            <input type="number" class="form-control text-center cart-qty-input" min="0" th:value="${item.quantity}" />
+                            <button class="btn btn-outline-secondary cart-inc-btn" type="button">+</button>
+                        </div>
+                    </td>
+                    <td><span th:text="${item.total != null ? 'S/ ' + #numbers.formatDecimal(item.total, 1, 'POINT', 2, 'COMMA') : 'S/ 0.00'}">S/ 0.00</span></td>
+                    <td><button class="btn btn-link cart-remove-btn" type="button">Eliminar</button></td>
                 </tr>
                 </tbody>
             </table>
+                        <div class="d-flex justify-content-between">
+                                <form method="post" action="/cart/clear" style="margin:0;">
+                                        <!-- main button is type=button so JS can perform an AJAX clear; provide a <noscript> submit fallback -->
+                                        <button id="cart-clear-btn" type="button" class="btn btn-outline-danger">Vaciar carrito</button>
+                                        <noscript>
+                                            <button type="submit" class="btn btn-outline-danger">Vaciar carrito</button>
+                                        </noscript>
+                                </form>
+                <a href="/products" class="btn btn-light">Seguir comprando</a>
+            </div>
         </div>
         <div class="col-md-4">
             <div class="card p-3">
                 <h4>Total a pagar</h4>
-                <h2 class="text-success" th:text="${cartTotal != null ? 'S/ ' + #numbers.formatDecimal(cartTotal, 1, 'POINT', 2, 'COMMA') : 'S/ 0.00'}">S/ 0.00</h2>
+                <h2 id="cart-total-val" class="text-success" th:text="${cartTotal != null ? 'S/ ' + #numbers.formatDecimal(cartTotal, 1, 'POINT', 2, 'COMMA') : 'S/ 0.00'}">S/ 0.00</h2>
                 <form th:action="@{/cart/checkout}" method="post">
                     <button type="submit" class="btn btn-primary w-100"
                             th:attr="disabled=${(cartItems == null or #lists.isEmpty(cartItems)) or (cartTotal == 0)}">
@@ -52,5 +72,8 @@
     </div>
 </div>
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- scripts -->
+<div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

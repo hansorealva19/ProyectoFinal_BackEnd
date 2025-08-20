@@ -27,4 +27,37 @@ public class CartService {
     public String checkout(String username, String jwt) {
         return cartRestService.checkout(username, jwt);
     }
+
+    public int getCartCount(String username, String jwt) {
+        return cartRestService.getCartCount(username, jwt);
+    }
+
+    public void clearCart(String username, String jwt) {
+        cartRestService.clearCart(username, jwt);
+    }
+
+    public void updateCartItemQuantity(String username, Long productId, int quantity, String jwt) {
+        cartRestService.updateCartItemQuantity(username, productId, quantity, jwt);
+    }
+
+    public void removeItemByProductId(String username, Long productId, String jwt) {
+        cartRestService.removeItemByProductId(username, productId, jwt);
+    }
+
+    // Merge a session-stored cart into the persistent cart for the given username.
+    // This iterates session items and forwards them to the cart-service via CartRestService.addToCart.
+    public void mergeSessionCart(String username, java.util.List<CartItemViewModel> items, String jwt) {
+        if (username == null || items == null || items.isEmpty()) return;
+        for (CartItemViewModel it : items) {
+            if (it == null) continue;
+            Long pid = it.getProductId();
+            int qty = it.getQuantity();
+            if (pid == null || qty <= 0) continue;
+            try {
+                cartRestService.addToCart(username, pid, qty, jwt);
+            } catch (Exception e) {
+                // best-effort merge: continue on errors
+            }
+        }
+    }
 }

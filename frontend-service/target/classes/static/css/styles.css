@@ -61,6 +61,26 @@ input, select, textarea {
 .navbar-custom .btn-link.nav-link { color: rgba(255,255,255,0.95); text-decoration: none; }
 .navbar-custom .btn-link.nav-link:hover { text-decoration: underline; color: #fff; }
 
+/* Badge animation when updated */
+.badge-pop {
+    animation: badgePop 360ms ease forwards;
+}
+@keyframes badgePop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+/* Slightly larger badge for visibility on navbar */
+.navbar .badge {
+    min-width: 1.6rem;
+    height: 1.6rem;
+    padding: 0 0.38rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Footer visual polish */
 .site-footer { padding-top: 2.5rem; padding-bottom: 1rem; background: #f8f9fa; }
 .site-footer .container { align-items: flex-start; }
@@ -147,4 +167,19 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
     max-width: 1200px;
     margin: 0 auto;
 }
+
+/* Toast styling for ecom-toast-container (tuned for contrast) */
+#ecom-toast-container .toast.text-bg-success {
+    background: linear-gradient(180deg, #dff6e8 0%, #cfeee0 100%); /* slightly darker, still soft */
+    border: 1px solid rgba(11,63,37,0.06);
+    box-shadow: 0 8px 22px rgba(11,63,37,0.08);
+}
+/* enforce readable text color inside the toast (override bootstrap default white) */
+#ecom-toast-container .toast.text-bg-success,
+#ecom-toast-container .toast.text-bg-success .toast-body,
+#ecom-toast-container .toast.text-bg-success .btn-close {
+    color: #0b3f25 !important; /* darker green for good contrast */
+}
+#ecom-toast-container .toast .toast-body { font-weight: 600; }
+#ecom-toast-container { max-width: 360px; }
  

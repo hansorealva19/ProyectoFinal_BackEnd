@@ -1,22 +1,22 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
-<!-- Fragmento de alertas con modal Bootstrap -->
+<!-- Toast alerts fragment -->
 <div th:fragment="alerts">
-        <!-- Inline fallback alerts removed to avoid duplicate messaging; modal will be used instead -->
+  <!-- Toast container positioned bottom-right for a professional look -->
+  <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <!-- Use flex column-reverse so newest toast appears above older ones -->
+    <div id="ecom-toast-container" style="display:flex;flex-direction:column-reverse;gap:0.5rem;align-items:flex-end;"></div>
+  </div>
 
-        <!-- Simple alert display (no modal) -->
-        <div th:if="${errorMessage != null}" class="container mt-3">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Error:</strong> <span th:text="${errorMessage}"></span>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-        <div th:if="${successMessage != null}" class="container mt-3">
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <strong>Éxito:</strong> <span th:text="${successMessage}"></span>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-</body>
-</html>
+  <!-- Fallback inline alerts for non-JS or server-side messages -->
+  <div th:if="${errorMessage != null}" class="container mt-3">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <strong>Error:</strong> <span th:text="${errorMessage}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </div>
+  <div th:if="${successMessage != null}" class="container mt-3">
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <strong>Éxito:</strong> <span th:text="${successMessage}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </div>
+</div>

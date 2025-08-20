@@ -10,12 +10,25 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item"><a class="nav-link" href="/products">Catálogo</a></li>
-        <li class="nav-item"><a class="nav-link" href="/cart">Carrito</a></li>
         <li class="nav-item"><a class="nav-link" href="/orders">Pedidos</a></li>
         <li class="nav-item"><a class="nav-link" href="/audit">Auditoría</a></li>
       </ul>
-      <ul class="navbar-nav mb-2 mb-lg-0">
+      <ul class="navbar-nav mb-2 mb-lg-0 align-items-center">
+  <li class="nav-item ms-3">
+    <a class="nav-link position-relative" href="/cart">
+            <!-- bootstrap icons: shopping cart (inline SVG to avoid external dependency) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart3" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path d="M0 1.5A.5.5 0 0 1 .5 1h1a.5.5 0 0 1 .485.379L2.89 5H14.5a.5.5 0 0 1 .49.598l-1.5 6A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L1.01 2H.5a.5.5 0 0 1-.5-.5zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+            </svg>
+            <span class="visually-hidden">Carrito</span>
+        <span th:if="${cartCount != null and cartCount > 0}" id="cart-badge" data-bs-toggle="tooltip" data-bs-placement="bottom" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.75rem;">
+              <span th:if="${cartCount &lt; 100}" th:text="${cartCount}"></span>
+              <span th:if="${cartCount &gt;= 100}">99+</span>
+            </span>
+    </a>
+  </li>
   <li class="nav-item" th:if="${session.USERNAME != null}"><a class="nav-link" href="/profile">Perfil</a></li>
+
   <li class="nav-item" th:if="${session.USERNAME != null}">
     <form th:action="@{/logout}" method="post" style="display:inline;" onsubmit="try{ window.ECOM_AUTH_GUARD && window.ECOM_AUTH_GUARD.markLoggedOut(); }catch(e){}">
       <button type="submit" class="btn btn-link nav-link" style="display:inline;padding:0;border:none;background:none;">Salir</button>

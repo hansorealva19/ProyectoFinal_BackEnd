@@ -8,6 +8,7 @@ public class CartItemViewModel {
     private int quantity;
     private double total;
     private Long productId;
+    private Long cartItemId;
     private String username;
 
     public CartItemViewModel() {}

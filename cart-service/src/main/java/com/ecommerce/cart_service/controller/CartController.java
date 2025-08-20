@@ -51,6 +51,20 @@ public class CartController {
         return ResponseEntity.ok(cartService.getItems(userId, pageable));
     }
 
+    @GetMapping("/{userId}/count")
+    public ResponseEntity<java.util.Map<String, Integer>> getCount(@PathVariable("userId") Long userId) {
+        int count = 0;
+        try {
+            java.util.Optional<Cart> oc = cartService.getCartByUserId(userId);
+            if (oc.isPresent() && oc.get().getItems() != null) {
+                count = oc.get().getItems().stream().mapToInt(i -> i.getQuantity()).sum();
+            }
+        } catch (Exception e) {
+            // ignore and return 0
+        }
+        return ResponseEntity.ok(java.util.Map.of("count", count));
+    }
+
     @PostMapping("/checkout/{userId}")
     public ResponseEntity<?> checkout(@PathVariable("userId") Long userId,
                                       @RequestHeader(name = "Authorization", required = false) String authorization,
