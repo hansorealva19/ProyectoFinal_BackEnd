@@ -15,7 +15,25 @@
         <tr><th>Fecha</th><td th:text="${payment.date}"></td></tr>
         <tr><th>Monto</th><td th:text="${payment.amount}"></td></tr>
         <tr><th>Estado</th><td th:text="${payment.status}"></td></tr>
-        <tr><th>Cuenta Origen</th><td th:text="${payment.sourceAccount}"></td></tr>
+
+        <!-- Friendly bank error message when payment failed -->
+        <tr th:if="${friendlyMessage != null}">
+            <th>Mensaje</th>
+            <td>
+                <div class="alert alert-danger" th:text="${friendlyMessage}">Fallo en el pago (ver detalles)</div>
+            </td>
+        </tr>
+
+        <!-- Cuenta de origen or Tarjeta (controller provides isCard/maskedCard) -->
+        <tr th:if="${!isCard}">
+            <th>Cuenta Origen</th>
+            <td th:text="${payment.payerAccount}">-</td>
+        </tr>
+        <tr th:if="${isCard}">
+            <th>Tarjeta</th>
+            <td th:text="${maskedCard}">-</td>
+        </tr>
+
         <tr><th>Cuenta Destino</th><td th:text="${payment.destinationAccount}"></td></tr>
         <tr><th>Descripción</th><td th:text="${payment.description}"></td></tr>
     </table>

@@ -1,0 +1,44 @@
+/* Backoffice styles for payments page */
+:root{
+  --primary: #0d6efd;
+  --muted: #6c757d;
+  --card-bg: #ffffff;
+  --surface: #f8f9fa;
+}
+body{
+  background: linear-gradient(180deg,#f6f7fb 0%, #eef2f7 100%);
+  font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  color: #212529;
+}
+.container.backoffice{
+  max-width: 1100px;
+}
+.header-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+}
+.card-box{
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(16,24,40,0.06);
+}
+.filter-row .form-label{font-size:0.85rem;color:var(--muted)}
+.table thead th{font-weight:600;background:#f1f5f9}
+.badge-status{
+  padding:0.35em 0.6em;font-size:0.75rem;border-radius:999px;
+}
+.badge-pending{background:#fff3cd;color:#856404;border:1px solid rgba(133,100,4,0.08)}
+.badge-completed{background:#d1e7dd;color:#0f5132}
+.badge-failed{background:#f8d7da;color:#842029}
+.small-muted{font-size:0.85rem;color:var(--muted)}
+.table-responsive{overflow:auto}
+.pagination .page-link{color:var(--primary)}
+.empty-placeholder{color:#6c757d;font-style:italic}
+.actions-row{display:flex;gap:0.5rem}
+@media (max-width: 768px){
+  .header-row{flex-direction:column;align-items:flex-start}
+  .filter-row .col-auto{width:100%}
+}

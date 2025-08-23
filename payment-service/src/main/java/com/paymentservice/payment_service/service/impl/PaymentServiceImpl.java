@@ -63,12 +63,17 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
         String payer = requestDTO.getPayerAccount() != null ? requestDTO.getPayerAccount() : "";
+        String payerCard = null;
+        if (requestDTO.getCardNumber() != null && !requestDTO.getCardNumber().isBlank()) {
+            payerCard = maskCard(requestDTO.getCardNumber().trim());
+        }
         String payee = requestDTO.getPayeeAccount();
         if ((payee == null || payee.isBlank()) && merchantAccountId != null && !merchantAccountId.isBlank()) {
             payee = merchantAccountId;
         }
     Payment payment = Payment.builder()
                 .payerAccount(payer)
+                .payerCard(payerCard)
                 .payeeAccount(payee != null ? payee : "")
                 .amount(requestDTO.getAmount())
                 .currency(requestDTO.getCurrency())
@@ -109,6 +114,15 @@ public class PaymentServiceImpl implements PaymentService {
                 .status(payment.getStatus())
                 .message("Payment created successfully")
                 .build();
+    }
+
+    private String maskCard(String card) {
+        if (card == null) return null;
+        String digits = card.replaceAll("\\D", "");
+        if (digits.length() <= 8) return digits;
+        String start = digits.substring(0, Math.min(4, digits.length()));
+        String end = digits.substring(Math.max(0, digits.length() - 4));
+        return start + " **** **** " + end;
     }
 
     public PaymentResponseDTO fallbackProcessPayment(PaymentRequestDTO requestDTO, Throwable t) {

@@ -4,13 +4,63 @@
     <meta charset="UTF-8">
     <title>Backoffice - Pagos</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <link rel="stylesheet" th:href="@{/css/backoffice.css}" />
     <link rel="stylesheet" href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css"/>
     <script th:src="@{/js/main.js}" defer></script>
 </head>
 <body>
-<div class="container mt-5">
-    <h1>Movimientos de Pagos</h1>
-    <table class="table table-striped">
+<div class="container mt-5 backoffice">
+    <div class="header-row mb-3">
+        <div>
+            <h1 class="h4">Movimientos de Pagos</h1>
+            <div class="small-muted">Listado y búsqueda de transacciones de pago</div>
+        </div>
+        <div class="actions-row">
+            <a class="btn btn-outline-primary" href="/backoffice/payments">Actualizar</a>
+        </div>
+    </div>
+
+    <div class="card-box filter-row mb-3">
+    <form method="get" action="/backoffice/payments" class="row g-3 mb-0">
+        <div class="col-auto">
+            <label class="form-label">Desde (fecha)</label>
+            <input type="datetime-local" name="startDate" class="form-control" th:value="${startDate}" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Hasta (fecha)</label>
+            <input type="datetime-local" name="endDate" class="form-control" th:value="${endDate}" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Monto Min</label>
+            <input type="number" step="0.01" name="minAmount" class="form-control" th:value="${minAmount}" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Monto Max</label>
+            <input type="number" step="0.01" name="maxAmount" class="form-control" th:value="${maxAmount}" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Estado</label>
+            <select name="status" class="form-select">
+                <option value="" th:selected="${statusFilter == ''}">Todos</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${statusFilter == s}"></option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Cuenta Origen / Tarjeta</label>
+            <input type="text" name="payerAccount" class="form-control" th:value="${payerAccountFilter}" placeholder="buscar..." />
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Cuenta Destino</label>
+            <input type="text" name="payeeAccount" class="form-control" th:value="${payeeAccountFilter}" placeholder="buscar..." />
+        </div>
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a class="btn btn-secondary ms-2" href="/backoffice/payments">Limpiar</a>
+        </div>
+    </form>
+
+    <div class="card-box table-responsive">
+    <table class="table table-striped align-middle mb-0">
         <thead>
             <tr>
                 <th>ID</th>
@@ -18,6 +68,7 @@
                 <th>Monto</th>
                 <th>Estado</th>
                 <th>Cuenta Origen</th>
+                <th>Tarjeta</th>
                 <th>Cuenta Destino</th>
                 <th>Detalle</th>
             </tr>
@@ -25,32 +76,35 @@
         <tbody>
             <tr th:each="payment : ${payments}">
                 <td th:text="${payment.id}"></td>
-                <td th:text="${payment.date}"></td>
+                <td th:text="${payment.createdAt != null ? #temporals.format(payment.createdAt, 'yyyy-MM-dd HH:mm:ss') : '-'}"></td>
                 <td th:text="${payment.amount}"></td>
-                <td th:text="${payment.status}"></td>
                 <td>
-                    <span th:if="${payment.sourceAccount != null and payment.sourceAccount.length() == 16}">
-                        Tarjeta: <span th:text="${payment.sourceAccount.substring(0,4)} + ' **** **** ' + ${payment.sourceAccount.substring(12)}"></span>
+                    <span th:switch="${payment.status}">
+                        <span th:case="'PENDING'" class="badge-status badge-pending" th:text="${payment.status}"></span>
+                        <span th:case="'COMPLETED'" class="badge-status badge-completed" th:text="${payment.status}"></span>
+                        <span th:case="'FAILED'" class="badge-status badge-failed" th:text="${payment.status}"></span>
+                        <span th:case="*" class="badge-status" th:text="${payment.status}"></span>
                     </span>
-                    <span th:if="${payment.sourceAccount == null}">-</span>
-                    <span th:if="${payment.sourceAccount != null and payment.sourceAccount.length() != 16}" th:text="${payment.sourceAccount}"></span>
                 </td>
+                <td th:text="${originAccountMap[payment.id] != null and originAccountMap[payment.id] != '' ? originAccountMap[payment.id] : '-'}"></td>
+                <td th:text="${maskedCardMap[payment.id] != null and maskedCardMap[payment.id] != '' ? maskedCardMap[payment.id] : '-'}"></td>
                 <td th:text="${payment.destinationAccount}"></td>
-                <td><a th:href="@{'/backoffice/payments/' + ${payment.id}}" class="btn btn-info btn-sm">Ver</a></td>
+                <td><a th:href="@{'/backoffice/payments/' + ${payment.id}}" class="btn btn-outline-info btn-sm">Ver</a></td>
             </tr>
         </tbody>
     </table>
+    </div>
     <!-- Pagination controls -->
     <nav th:if="${totalPages} != null and ${totalPages} > 1" aria-label="Page navigation">
         <ul class="pagination">
             <li class="page-item" th:classappend="${currentPage == 0} ? ' disabled'">
-                <a class="page-link" th:href="@{/backoffice/payments(page=${currentPage - 1})}">Previous</a>
+                <a class="page-link" th:href="@{/backoffice/payments(page=${currentPage - 1}, startDate=${startDate}, endDate=${endDate}, minAmount=${minAmount}, maxAmount=${maxAmount}, status=${statusFilter}, payerAccount=${payerAccountFilter}, payeeAccount=${payeeAccountFilter})}">Previous</a>
             </li>
             <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? ' active'">
-                <a class="page-link" th:href="@{/backoffice/payments(page=${i})}" th:text="${i + 1}"></a>
+                <a class="page-link" th:href="@{/backoffice/payments(page=${i}, startDate=${startDate}, endDate=${endDate}, minAmount=${minAmount}, maxAmount=${maxAmount}, status=${statusFilter}, payerAccount=${payerAccountFilter}, payeeAccount=${payeeAccountFilter})}" th:text="${i + 1}"></a>
             </li>
             <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? ' disabled'">
-                <a class="page-link" th:href="@{/backoffice/payments(page=${currentPage + 1})}">Next</a>
+                <a class="page-link" th:href="@{/backoffice/payments(page=${currentPage + 1}, startDate=${startDate}, endDate=${endDate}, minAmount=${minAmount}, maxAmount=${maxAmount}, status=${statusFilter}, payerAccount=${payerAccountFilter}, payeeAccount=${payeeAccountFilter})}">Next</a>
             </li>
         </ul>
     </nav>

@@ -19,6 +19,12 @@ public class CardController {
     @PostMapping("/charge")
     public ResponseEntity<CardChargeResponse> chargeCard(@RequestBody CardChargeRequest request) {
         CardChargeResponse response = cardService.chargeCard(request);
+        if (response == null) {
+            return ResponseEntity.status(500).body(new CardChargeResponse(false, "Internal error"));
+        }
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(400).body(response);
+        }
         return ResponseEntity.ok(response);
     }
 }

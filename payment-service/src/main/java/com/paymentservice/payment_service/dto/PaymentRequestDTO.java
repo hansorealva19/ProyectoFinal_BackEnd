@@ -17,4 +17,6 @@ public class PaymentRequestDTO {
     // Optional key supplied by the client to make the request idempotent
     private String idempotencyKey;
     private String description;
+    // optional card number when paying by card
+    private String cardNumber;
 }

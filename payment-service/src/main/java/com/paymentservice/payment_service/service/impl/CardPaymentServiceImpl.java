@@ -54,10 +54,22 @@ public class CardPaymentServiceImpl implements CardPaymentService {
                 }
             }
             HttpEntity<BankCardChargeRequest> bankEntity = new HttpEntity<>(bankReq, headers);
-            ResponseEntity<CardPaymentResponse> response = restTemplate.postForEntity(url, bankEntity, CardPaymentResponse.class);
-            CardPaymentResponse result = response.getBody();
+            ResponseEntity<CardPaymentResponse> response = null;
+            CardPaymentResponse result = null;
+            try {
+                response = restTemplate.postForEntity(url, bankEntity, CardPaymentResponse.class);
+                result = response != null ? response.getBody() : null;
+            } catch (org.springframework.web.client.RestClientResponseException r) {
+                // Bank returned non-2xx; try to parse message for logging
+                String err = r.getResponseBodyAsString();
+                log.warn("Bank returned error for card charge: status={} body={}", r.getRawStatusCode(), err);
+                CardPaymentResponse errResp = new CardPaymentResponse();
+                errResp.setSuccess(false);
+                errResp.setMessage(err != null && !err.isBlank() ? err : r.getMessage());
+                result = errResp;
+            }
             log.debug("Bank response for card charge: {}", result);
-            // Si el pago fue exitoso, registrar en la tabla payments
+            // Only persist a payment record when the bank explicitly reports success
             if (result != null && result.isSuccess()) {
         // Prefer the account number returned by the bank when available (it represents the actual debited account)
         String payerAccount = result.getFromAccountNumber() != null && !result.getFromAccountNumber().isBlank()

@@ -132,9 +132,20 @@ public class OrderServiceImpl implements OrderService {
 		Order order = found.get();
 		// if already final, skip
 		if (order.getStatus() != null && order.getStatus().isFinal()) return;
-		// set to CONFIRMED (treated as PAID)
-		order.setStatus(OrderStatus.CONFIRMED);
-		orderRepository.save(order);
+		// Only mark order as CONFIRMED when payment notification explicitly indicates success.
+		String nstatus = note.getStatus();
+		if (nstatus == null) {
+			org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Payment notification for order {} contains no status; skipping confirmation", note.getOrderId());
+		} else if ("SUCCESS".equalsIgnoreCase(nstatus)) {
+			order.setStatus(OrderStatus.CONFIRMED);
+			orderRepository.save(order);
+		} else if ("FAILED".equalsIgnoreCase(nstatus)) {
+			// mark as cancelled for failed payments to avoid leaving orders in limbo
+			order.setStatus(OrderStatus.CANCELLED);
+			orderRepository.save(order);
+		} else {
+			org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).info("Payment notification for order {} has non-terminal status='{}' - leaving order in current state", note.getOrderId(), nstatus);
+		}
 
 		// persist notification record to avoid reprocessing
 		try {

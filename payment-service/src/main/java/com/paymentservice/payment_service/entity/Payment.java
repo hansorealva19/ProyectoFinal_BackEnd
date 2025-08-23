@@ -19,6 +19,9 @@ public class Payment {
 
     @Column(nullable = false)
     private String payerAccount;
+    
+    @Column(nullable = true)
+    private String payerCard;
 
     @Column(nullable = false)
     private String payeeAccount;
@@ -51,11 +54,38 @@ public class Payment {
         return payerAccount;
     }
 
+    // expose card for templates
+    public String getCard() {
+        return payerCard;
+    }
+
     public String getDestinationAccount() {
         return payeeAccount;
     }
 
     public String getIdempotencyKey() {
         return idempotencyKey;
+    }
+
+    // Ensure payerCard never stores a full PAN: mask it as a last-resort guard before persisting
+    @jakarta.persistence.PrePersist
+    @jakarta.persistence.PreUpdate
+    private void ensurePayerCardMasked() {
+        if (this.payerCard == null) return;
+        String pc = this.payerCard.trim();
+        if (pc.isEmpty()) { this.payerCard = null; return; }
+        // If it already looks masked (contains '*'), assume safe
+        if (pc.indexOf('*') >= 0) return;
+        // Keep only digits then mask
+        String digits = pc.replaceAll("\\D", "");
+        if (digits.isEmpty()) { this.payerCard = null; return; }
+        if (digits.length() <= 4) {
+            // too short to meaningfully mask, hide entirely
+            this.payerCard = "****";
+            return;
+        }
+        String start = digits.substring(0, Math.min(4, digits.length()));
+        String end = digits.substring(Math.max(0, digits.length() - 4));
+        this.payerCard = start + " **** **** " + end;
     }
 }

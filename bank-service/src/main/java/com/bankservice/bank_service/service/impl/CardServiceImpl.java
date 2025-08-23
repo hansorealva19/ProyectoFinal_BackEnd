@@ -38,8 +38,11 @@ public class CardServiceImpl implements CardService {
     @Transactional
     public CardChargeResponse chargeCard(CardChargeRequest request) {
         Card card = cardRepository.findByCardNumber(request.getCardNumber()).orElse(null);
-        if (card == null || !card.isActive()) {
-            return new CardChargeResponse(false, "Tarjeta no encontrada o inactiva");
+        if (card == null) {
+            return new CardChargeResponse(false, "Tarjeta no encontrada");
+        }
+        if (!card.isActive()) {
+            return new CardChargeResponse(false, "Tarjeta inactiva");
         }
         // Validación de nombre de titular insensible a mayúsculas/minúsculas y espacios
         String dbHolder = card.getCardHolder().replaceAll("\\s+", "").toLowerCase();
@@ -53,11 +56,17 @@ public class CardServiceImpl implements CardService {
         if (!card.getExpirationDate().toString().equals(request.getExpirationDate())) {
             return new CardChargeResponse(false, "Fecha de expiración incorrecta");
         }
+        // Validate amount
+        if (request.getAmount() == null || request.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return new CardChargeResponse(false, "Monto inválido");
+        }
+
         if (card.getAccount().getBalance().compareTo(request.getAmount()) < 0) {
             return new CardChargeResponse(false, "Fondos insuficientes");
         }
-        // Descontar saldo
+        // Descontar saldo y persistir la cuenta origen inmediatamente
         card.getAccount().setBalance(card.getAccount().getBalance().subtract(request.getAmount()));
+        accountRepository.save(card.getAccount());
         // Registrar transacción con descripción personalizada + info de tarjeta
         String userDesc = request.getDescription();
         String cardInfo = "Pago con tarjeta: " + card.getCardNumber();
