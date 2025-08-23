@@ -41,19 +41,34 @@ public class PaymentServiceImpl implements PaymentService {
     @CircuitBreaker(name = "paymentService", fallbackMethod = "fallbackProcessPayment")
     public PaymentResponseDTO processPayment(PaymentRequestDTO requestDTO) {
         logger.info("Processing payment: {}", requestDTO);
+        // If client provided an idempotency key, and a payment with that key already exists,
+        // return the existing record instead of creating a duplicate.
+        if (requestDTO.getIdempotencyKey() != null && !requestDTO.getIdempotencyKey().isBlank()) {
+            java.util.Optional<com.paymentservice.payment_service.entity.Payment> existing = paymentRepository.findByIdempotencyKey(requestDTO.getIdempotencyKey());
+            if (existing.isPresent()) {
+                Payment p = existing.get();
+                logger.info("Returning existing payment for idempotencyKey={}: {}", requestDTO.getIdempotencyKey(), p.getId());
+                return PaymentResponseDTO.builder()
+                        .id(p.getId())
+                        .status(p.getStatus())
+                        .message("Payment already processed (idempotent)")
+                        .build();
+            }
+        }
         String payer = requestDTO.getPayerAccount() != null ? requestDTO.getPayerAccount() : "";
         String payee = requestDTO.getPayeeAccount();
         if ((payee == null || payee.isBlank()) && merchantAccountId != null && !merchantAccountId.isBlank()) {
             payee = merchantAccountId;
         }
-        Payment payment = Payment.builder()
+    Payment payment = Payment.builder()
                 .payerAccount(payer)
                 .payeeAccount(payee != null ? payee : "")
                 .amount(requestDTO.getAmount())
                 .currency(requestDTO.getCurrency())
                 .status("PENDING")
                 .createdAt(LocalDateTime.now())
-                .description(requestDTO.getDescription())
+        .description(requestDTO.getDescription())
+        .idempotencyKey(requestDTO.getIdempotencyKey())
                 .build();
     payment = paymentRepository.save(payment);
     final Payment publishedPayment = payment;

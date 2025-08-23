@@ -5,7 +5,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payments")
+@Table(name = "payments", indexes = {
+    @Index(name = "idx_payments_idempotency_key", columnList = "idempotency_key")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,6 +38,9 @@ public class Payment {
     @Column(nullable = true)
     private String description;
 
+    @Column(name = "idempotency_key", nullable = true, unique = false)
+    private String idempotencyKey;
+
     // For Thymeleaf compatibility: expose 'date' as alias for createdAt
     public LocalDateTime getDate() {
         return createdAt;
@@ -48,5 +53,9 @@ public class Payment {
 
     public String getDestinationAccount() {
         return payeeAccount;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
     }
 }

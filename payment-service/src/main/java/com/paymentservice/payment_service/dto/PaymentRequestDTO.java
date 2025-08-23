@@ -14,5 +14,7 @@ public class PaymentRequestDTO {
     private String payeeAccount;
     private Double amount;
     private String currency;
+    // Optional key supplied by the client to make the request idempotent
+    private String idempotencyKey;
     private String description;
 }

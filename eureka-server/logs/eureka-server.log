@@ -3792,3 +3792,238 @@
 2025-08-19 19:46:47 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
 2025-08-19 19:46:57 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 11ms
 2025-08-19 19:47:07 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 13:39:23 - [main] INFO  c.e.e.EurekaServerApplication   - Starting EurekaServerApplication using Java 17.0.9 with PID 12432 (C:\Users\HANS\OneDrive\Documents\Java_Backend\ProyectoFinal_BackEnd\eureka-server\target\classes started by HANS in C:\Users\HANS\OneDrive\Documents\Java_Backend\ProyectoFinal_BackEnd\eureka-server)
+2025-08-23 13:39:23 - [main] INFO  c.e.e.EurekaServerApplication   - No active profile set, falling back to 1 default profile: "default"
+2025-08-23 13:39:26 - [main] INFO  o.s.cloud.context.scope.GenericScope   - BeanFactory id=a065ca1d-2727-378c-abf3-f1c1b4626ccf
+2025-08-23 13:39:27 - [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer   - Tomcat initialized with port(s): 8761 (http)
+2025-08-23 13:39:27 - [main] INFO  o.a.catalina.core.StandardService   - Starting service [Tomcat]
+2025-08-23 13:39:27 - [main] INFO  o.a.catalina.core.StandardEngine   - Starting Servlet engine: [Apache Tomcat/10.1.18]
+2025-08-23 13:39:27 - [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/]   - Initializing Spring embedded WebApplicationContext
+2025-08-23 13:39:27 - [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext   - Root WebApplicationContext: initialization completed in 4431 ms
+2025-08-23 13:39:29 - [main] INFO  c.n.d.p.DiscoveryJerseyProvider   - Using JSON encoding codec LegacyJacksonJson
+2025-08-23 13:39:29 - [main] INFO  c.n.d.p.DiscoveryJerseyProvider   - Using JSON decoding codec LegacyJacksonJson
+2025-08-23 13:39:29 - [main] INFO  c.n.d.p.DiscoveryJerseyProvider   - Using XML encoding codec XStreamXml
+2025-08-23 13:39:29 - [main] INFO  c.n.d.p.DiscoveryJerseyProvider   - Using XML decoding codec XStreamXml
+2025-08-23 13:39:31 - [main] WARN  o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger   - Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2025-08-23 13:39:31 - [main] INFO  o.s.c.n.eureka.InstanceInfoFactory   - Setting initial instance status as: STARTING
+2025-08-23 13:39:31 - [main] INFO  c.netflix.discovery.DiscoveryClient   - Initializing Eureka in region us-east-1
+2025-08-23 13:39:31 - [main] INFO  c.netflix.discovery.DiscoveryClient   - Client configured to neither register nor query for data.
+2025-08-23 13:39:31 - [main] INFO  c.netflix.discovery.DiscoveryClient   - Discovery Client initialized at timestamp 1755974371480 with initial instances count: 0
+2025-08-23 13:39:31 - [main] INFO  c.n.e.DefaultEurekaServerContext   - Initializing ...
+2025-08-23 13:39:31 - [main] WARN  c.n.eureka.cluster.PeerEurekaNodes   - The replica size seems to be empty. Check the route 53 DNS Registry
+2025-08-23 13:39:31 - [main] INFO  c.n.e.r.AbstractInstanceRegistry   - Finished initializing remote region registries. All known remote regions: []
+2025-08-23 13:39:31 - [main] INFO  c.n.e.DefaultEurekaServerContext   - Initialized
+2025-08-23 13:39:31 - [main] INFO  o.s.b.a.e.web.EndpointLinksResolver   - Exposing 1 endpoint(s) beneath base path '/actuator'
+2025-08-23 13:39:31 - [main] INFO  o.s.c.n.e.s.EurekaServiceRegistry   - Registering application EUREKA-SERVER with eureka with status UP
+2025-08-23 13:39:31 - [Thread-9] INFO  o.s.c.n.e.s.EurekaServerBootstrap   - isAws returned false
+2025-08-23 13:39:31 - [Thread-9] INFO  o.s.c.n.e.s.EurekaServerBootstrap   - Initialized server context
+2025-08-23 13:39:31 - [Thread-9] INFO  c.n.e.r.PeerAwareInstanceRegistryImpl   - Got 1 instances from neighboring DS node
+2025-08-23 13:39:31 - [Thread-9] INFO  c.n.e.r.PeerAwareInstanceRegistryImpl   - Renew threshold is: 1
+2025-08-23 13:39:31 - [Thread-9] INFO  c.n.e.r.PeerAwareInstanceRegistryImpl   - Changing status to UP
+2025-08-23 13:39:31 - [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer   - Tomcat started on port(s): 8761 (http) with context path ''
+2025-08-23 13:39:31 - [main] INFO  o.s.c.n.e.s.EurekaAutoServiceRegistration   - Updating port to 8761
+2025-08-23 13:39:31 - [Thread-9] INFO  o.s.c.n.e.s.EurekaServerInitializerConfiguration   - Started Eureka Server
+2025-08-23 13:39:32 - [main] INFO  c.e.e.EurekaServerApplication   - Started EurekaServerApplication in 9.818 seconds (process running for 10.603)
+2025-08-23 13:39:32 - [main] INFO  c.e.e.EurekaServerApplication   - Eureka Server started successfully
+2025-08-23 13:39:36 - [http-nio-8761-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/]   - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-08-23 13:39:36 - [http-nio-8761-exec-1] INFO  o.s.web.servlet.DispatcherServlet   - Initializing Servlet 'dispatcherServlet'
+2025-08-23 13:39:36 - [http-nio-8761-exec-1] INFO  o.s.web.servlet.DispatcherServlet   - Completed initialization in 1 ms
+2025-08-23 13:39:36 - [http-nio-8761-exec-2] INFO  c.n.e.r.AbstractInstanceRegistry   - Registered instance PAYMENT-SERVICE/MSI:payment-service:8082 with status UP (replication=false)
+2025-08-23 13:39:41 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:39:45 - [http-nio-8761-exec-8] INFO  c.n.e.r.AbstractInstanceRegistry   - Registered instance FRONTEND-SERVICE/MSI:frontend-service:8090 with status UP (replication=false)
+2025-08-23 13:39:51 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:40:00 - [http-nio-8761-exec-3] INFO  c.n.e.r.AbstractInstanceRegistry   - Registered instance USER-SERVICE/MSI:user-service:8085 with status UP (replication=false)
+2025-08-23 13:40:01 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:40:11 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:40:12 - [http-nio-8761-exec-10] INFO  c.n.e.r.AbstractInstanceRegistry   - Registered instance CART-SERVICE/MSI:cart-service:8086 with status UP (replication=false)
+2025-08-23 13:40:13 - [http-nio-8761-exec-2] INFO  c.n.e.r.AbstractInstanceRegistry   - Registered instance PRODUCT-SERVICE/MSI:product-service:8083 with status UP (replication=false)
+2025-08-23 13:40:21 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:40:25 - [http-nio-8761-exec-3] INFO  c.n.e.r.AbstractInstanceRegistry   - Registered instance UNKNOWN/MSI:8084 with status UP (replication=false)
+2025-08-23 13:40:31 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:40:41 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:40:51 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:41:01 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:41:11 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 8ms
+2025-08-23 13:41:21 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 2ms
+2025-08-23 13:41:31 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 6ms
+2025-08-23 13:41:41 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 11ms
+2025-08-23 13:41:51 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 13:42:01 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 2ms
+2025-08-23 13:42:11 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:42:21 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:42:31 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:42:41 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 5ms
+2025-08-23 13:42:51 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 5ms
+2025-08-23 13:43:01 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:43:11 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 13:43:21 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 13:43:31 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:43:41 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:43:51 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 6ms
+2025-08-23 13:44:01 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:44:11 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:44:21 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:44:31 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 13:44:41 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:44:51 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 6ms
+2025-08-23 13:45:01 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 8ms
+2025-08-23 13:45:11 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:45:21 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 13:45:31 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:45:41 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:45:51 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 8ms
+2025-08-23 13:46:01 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 11ms
+2025-08-23 13:46:11 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:46:21 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:46:31 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 13:46:41 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:46:51 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:47:01 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:47:11 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:47:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 13:47:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 5ms
+2025-08-23 13:47:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 13:47:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:48:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 13:48:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:48:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 11ms
+2025-08-23 13:48:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:48:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:48:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:49:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 13:49:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:49:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 13:49:31 - [Eureka-PeerNodesUpdater] WARN  c.n.eureka.cluster.PeerEurekaNodes   - The replica size seems to be empty. Check the route 53 DNS Registry
+2025-08-23 13:49:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 8ms
+2025-08-23 13:49:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:49:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 5ms
+2025-08-23 13:50:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:50:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:50:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 13:50:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 13:50:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 6ms
+2025-08-23 13:50:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:51:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:51:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 6ms
+2025-08-23 13:51:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 5ms
+2025-08-23 13:51:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:51:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 13:51:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:52:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 13:52:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 17ms
+2025-08-23 13:52:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 13:52:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:52:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 13:52:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 13:53:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 13:53:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 13:53:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:53:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:53:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 13:53:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 6ms
+2025-08-23 13:54:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 13:54:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:54:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:54:31 - [ReplicaAwareInstanceRegistry - RenewalThresholdUpdater] INFO  c.n.e.r.PeerAwareInstanceRegistryImpl   - Current renewal threshold is : 0
+2025-08-23 13:54:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 13:54:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 13:54:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 13:55:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 13:55:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:55:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:55:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 11ms
+2025-08-23 13:55:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 13:55:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:56:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 13:56:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 13:56:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 13:56:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 8ms
+2025-08-23 13:56:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:56:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:57:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 13:57:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 2ms
+2025-08-23 13:57:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:57:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 13:57:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 13:57:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:58:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 13:58:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 13:58:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 13:58:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 18ms
+2025-08-23 13:58:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 11ms
+2025-08-23 13:58:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 13:59:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 7ms
+2025-08-23 13:59:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 13:59:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 13:59:31 - [Eureka-PeerNodesUpdater] WARN  c.n.eureka.cluster.PeerEurekaNodes   - The replica size seems to be empty. Check the route 53 DNS Registry
+2025-08-23 13:59:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 17ms
+2025-08-23 13:59:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 13:59:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 14:00:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:00:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:00:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 14:00:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 14:00:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 14:00:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:01:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 14:01:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 14:01:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 14:01:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 14:01:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 8ms
+2025-08-23 14:01:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 14:02:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 14:02:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 2ms
+2025-08-23 14:02:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 14:02:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 14:02:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 7ms
+2025-08-23 14:02:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 2ms
+2025-08-23 14:03:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 7ms
+2025-08-23 14:03:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 14:03:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 14:03:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:03:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:03:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 2ms
+2025-08-23 14:04:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 14:04:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 6ms
+2025-08-23 14:04:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:04:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 8ms
+2025-08-23 14:04:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:04:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 12ms
+2025-08-23 14:05:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 14:05:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 14:05:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 14:05:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 14:05:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 17ms
+2025-08-23 14:05:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 7ms
+2025-08-23 14:06:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 14:06:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 13ms
+2025-08-23 14:06:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 14:06:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:06:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 14:06:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 14:07:02 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 14:07:12 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 5ms
+2025-08-23 14:07:22 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 0ms
+2025-08-23 14:07:32 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 14ms
+2025-08-23 14:07:42 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 2ms
+2025-08-23 14:07:52 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 14:08:03 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 14:08:13 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 5ms
+2025-08-23 14:08:23 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 15ms
+2025-08-23 14:08:33 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 14:08:43 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 14:08:53 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 8ms
+2025-08-23 14:09:03 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 4ms
+2025-08-23 14:09:13 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 3ms
+2025-08-23 14:09:19 - [http-nio-8761-exec-10] INFO  c.n.e.r.AbstractInstanceRegistry   - Registered instance PAYMENT-SERVICE/MSI:payment-service:8082 with status DOWN (replication=false)
+2025-08-23 14:09:23 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 11ms
+2025-08-23 14:09:31 - [Eureka-PeerNodesUpdater] WARN  c.n.eureka.cluster.PeerEurekaNodes   - The replica size seems to be empty. Check the route 53 DNS Registry
+2025-08-23 14:09:31 - [ReplicaAwareInstanceRegistry - RenewalThresholdUpdater] INFO  c.n.e.r.PeerAwareInstanceRegistryImpl   - Current renewal threshold is : 0
+2025-08-23 14:09:33 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 14:09:37 - [http-nio-8761-exec-8] INFO  c.n.e.r.AbstractInstanceRegistry   - Registered instance PAYMENT-SERVICE/MSI:payment-service:8082 with status UP (replication=false)
+2025-08-23 14:09:43 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms
+2025-08-23 14:09:53 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 14:10:03 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 1ms
+2025-08-23 14:10:13 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 7ms
+2025-08-23 14:10:23 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 9ms
+2025-08-23 14:10:33 - [Eureka-EvictionTimer] INFO  c.n.e.r.AbstractInstanceRegistry   - Running the evict task with compensationTime 10ms

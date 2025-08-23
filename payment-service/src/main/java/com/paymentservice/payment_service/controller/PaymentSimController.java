@@ -369,13 +369,23 @@ public class PaymentSimController {
         "</form>" +
         "<div id=\"result\"></div>" +
         "</div>" +
-        "<script>document.getElementById('simPay').addEventListener('submit', async function(e){" +
-    "e.preventDefault();const getVal=id=>document.getElementById(id).value===undefined? '': document.getElementById(id).value.toString().trim();" +
-    "const payload={ orderId: getVal('orderId'), merchantCode: getVal('merchantCode') || 'ecommerce' };" +
-    "const fromAccount = getVal('fromAccountId'); if (fromAccount) { try { payload.fromAccountId = Number(fromAccount); } catch(e) { payload.fromAccountId = fromAccount; } }" +
-    "const cardNumber = getVal('cardNumber'); if (cardNumber) { payload.cardNumber = cardNumber; const ch = getVal('cardHolder'); if (ch) payload.cardHolder = ch; const exp = getVal('expirationDate'); if (exp) payload.expirationDate = exp; const cvv = getVal('cvv'); if (cvv) payload.cvv = cvv; }" +
-    "const amountVal = getVal('amount'); if (amountVal) { try { payload.amount = Number(amountVal); } catch(e) { payload.amount = amountVal; } }" +
-    "const r = await fetch('/api/payments/sim/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); const txt = await r.text(); try { const j = JSON.parse(txt); document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(j,null,2) + '</pre>'; if (j && j.status && (j.status==='PAID_AND_NOTIFIED' || j.status==='NOTIFIED_NO_TRANSFER')) { setTimeout(function(){ window.location.href = 'http://localhost:8090/orders'; }, 600); } } catch(er) { document.getElementById('result').innerText = txt; } });</script></body></html>";
+        "<script>\n" +
+    "(function(){\n" +
+    "  const form = document.getElementById('simPay');\n" +
+    "  form.addEventListener('submit', async function(e){\n" +
+    "    e.preventDefault();\n" +
+    "    const btn = this.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; btn.innerText = 'Processing...'; }\n" +
+    "    const getVal = id => { const el = document.getElementById(id); return el && el.value !== undefined ? el.value.toString().trim() : ''; };\n" +
+    "    const payload = { orderId: getVal('orderId'), merchantCode: getVal('merchantCode') || 'ecommerce' };\n" +
+    "    // idempotency key: reuse per-order stored in sessionStorage to prevent duplicate charges on double-click\n" +
+    "    try { const ikKey = 'idem_' + payload.orderId; let ik = sessionStorage.getItem(ikKey); if (!ik) { ik = ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c=> (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c/4).toString(16)); sessionStorage.setItem(ikKey, ik); } payload.idempotencyKey = ik; } catch(ex) { /* ignore */ }\n" +
+    "    const fromAccount = getVal('fromAccountId'); if (fromAccount) { try { payload.fromAccountId = Number(fromAccount); } catch(e) { payload.fromAccountId = fromAccount; } }\n" +
+    "    const cardNumber = getVal('cardNumber'); if (cardNumber) { payload.cardNumber = cardNumber; const ch = getVal('cardHolder'); if (ch) payload.cardHolder = ch; const exp = getVal('expirationDate'); if (exp) payload.expirationDate = exp; const cvv = getVal('cvv'); if (cvv) payload.cvv = cvv; }\n" +
+    "    const amountVal = getVal('amount'); if (amountVal) { try { payload.amount = Number(amountVal); } catch(e) { payload.amount = amountVal; } }\n" +
+    "    try { const r = await fetch('/api/payments/sim/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); const txt = await r.text(); try { const j = JSON.parse(txt); document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(j,null,2) + '</pre>'; if (j && j.status && (j.status==='PAID_AND_NOTIFIED' || j.status==='NOTIFIED_NO_TRANSFER')) { setTimeout(function(){ window.location.href = 'http://localhost:8090/orders'; }, 600); } } catch(er) { document.getElementById('result').innerText = txt; } } catch(fetchErr) { document.getElementById('result').innerText = 'Network error: ' + fetchErr; }\n" +
+    "  });\n" +
+    "})();\n" +
+    "</script></body></html>";
         return html;
     }
 

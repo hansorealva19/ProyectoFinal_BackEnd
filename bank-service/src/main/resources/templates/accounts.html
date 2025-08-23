@@ -54,6 +54,7 @@
                     <thead class="table-dark">
                     <tr>
                         <th>N° Cuenta</th>
+                           <th>Banco</th>
                         <th>Saldo</th>
                         <th class="text-center">Acciones</th>
                     </tr>
@@ -63,6 +64,9 @@
                         <td>
                             <strong th:text="${account.accountNumber}"></strong>
                         </td>
+                            <td>
+                                <span th:text="${account.bankName != null ? account.bankName : '-'}"></span>
+                            </td>
                         <td>
                             <span class="text-success fw-bold">$<span th:text="${#numbers.formatDecimal(account.balance,1,2)}"></span></span>
                         </td>

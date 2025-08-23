@@ -8,4 +8,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 	// find most recent payment whose description mentions the order (e.g. "Order 27")
 	java.util.Optional<Payment> findTopByDescriptionContainingOrderByCreatedAtDesc(String descriptionFragment);
+
+	java.util.Optional<Payment> findByIdempotencyKey(String idempotencyKey);
 }
