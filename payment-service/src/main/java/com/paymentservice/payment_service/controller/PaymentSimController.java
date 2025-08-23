@@ -174,8 +174,28 @@ public class PaymentSimController {
                             if (bankOk) {
                                 paymentRepository.findById(pid).ifPresent(p -> {
                                     p.setStatus("COMPLETED");
-                                    p.setPayerAccount(cardNum);
-                                    p.setPayeeAccount(toAcc);
+                                    // prefer account number/id returned by bank charge if available
+                                    try {
+                                        java.util.Map bodyMap = bankResp.getBody();
+                                        String fromAccNumber = null;
+                                        String fromAccIdStr = null;
+                                        if (bodyMap != null) {
+                                            if (bodyMap.get("fromAccountNumber") != null) fromAccNumber = bodyMap.get("fromAccountNumber").toString();
+                                            if (bodyMap.get("fromAccountId") != null) fromAccIdStr = bodyMap.get("fromAccountId").toString();
+                                        }
+                                        if (fromAccNumber != null && !fromAccNumber.isBlank()) {
+                                            p.setPayerAccount(fromAccNumber);
+                                        } else if (fromAccIdStr != null && !fromAccIdStr.isBlank()) {
+                                            p.setPayerAccount(fromAccIdStr);
+                                        } else {
+                                            p.setPayerAccount(cardNum);
+                                        }
+                                        p.setPayeeAccount(toAcc);
+                                    } catch (Exception ex) {
+                                        // fallback to showing card number
+                                        p.setPayerAccount(cardNum);
+                                        p.setPayeeAccount(toAcc);
+                                    }
                                     try {
                                         paymentRepository.save(p);
                                         org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).info("Payment {} updated to COMPLETED", pid);

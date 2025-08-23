@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,11 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public List<Payment> findAll() {
         return paymentRepository.findAll();
+    }
+
+    @Override
+    public Page<Payment> findAll(Pageable pageable) {
+        return paymentRepository.findAll(pageable);
     }
 
     @Override

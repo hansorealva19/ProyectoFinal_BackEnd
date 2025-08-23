@@ -72,7 +72,7 @@ public class CardServiceImpl implements CardService {
         }
 
         // If toAccountId is provided, credit that account (merchant)
-        if (request.getToAccountId() != null) {
+    if (request.getToAccountId() != null) {
             Account toAcc = null;
             try {
                 toAcc = accountRepository.findById(request.getToAccountId()).orElse(null);
@@ -109,6 +109,9 @@ public class CardServiceImpl implements CardService {
                     .build();
             transactionRepository.save(transaction);
         }
-        return new CardChargeResponse(true, "Pago realizado correctamente");
+        // return also the account id/number that was debited
+        Long fromAccId = card.getAccount() != null ? card.getAccount().getId() : null;
+        String fromAccNumber = card.getAccount() != null ? card.getAccount().getAccountNumber() : null;
+        return new CardChargeResponse(true, "Pago realizado correctamente", fromAccId, fromAccNumber);
     }
 }

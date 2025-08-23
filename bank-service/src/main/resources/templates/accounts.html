@@ -71,12 +71,9 @@
                             <span class="text-success fw-bold">$<span th:text="${#numbers.formatDecimal(account.balance,1,2)}"></span></span>
                         </td>
                         <td class="text-center">
-                            <a th:href="@{'/accounts/' + ${account.id}}" class="btn btn-primary btn-sm">
-                                Ver Detalle
-                            </a>
-                            <a th:href="@{'/transactions/new?accountId=' + ${account.id}}" class="btn btn-info btn-sm">
-                                Transferir
-                            </a>
+                            <a th:href="@{'/accounts/' + ${account.id}}" class="btn btn-primary btn-sm">Ver Detalle</a>
+                            <a th:href="@{'/transactions/new?accountId=' + ${account.id}}" class="btn btn-info btn-sm">Transferir</a>
+                            <a th:href="@{'/accounts/' + ${account.id} + '/deposit'}" class="btn btn-success btn-sm">Agregar Saldo</a>
                         </td>
                     </tr>
                     </tbody>

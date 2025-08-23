@@ -21,9 +21,15 @@ import com.bankservice.bank_service.repository.CardRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.bankservice.bank_service.util.BankListUtil;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -33,6 +39,8 @@ import java.util.List;
 @Controller
 @RequiredArgsConstructor
 public class WebController {
+
+    private static final Logger log = LoggerFactory.getLogger(WebController.class);
 
     private final AccountService accountService;
     private final TransactionService transactionService;
@@ -158,6 +166,7 @@ public class WebController {
                 return "redirect:/login";
             }
         } catch (Exception e) {
+            log.error("Error loading new account form", e);
             model.addAttribute("error", "Error: " + e.getMessage());
             return "error";
         }
@@ -224,8 +233,54 @@ public class WebController {
         }
     }
 
+    @GetMapping("/accounts/{id}/deposit")
+    public String depositForm(@PathVariable Long id, Model model, Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) return "redirect:/login";
+            AccountDTO account = accountService.getById(id);
+            model.addAttribute("account", account);
+            return "deposit-form";
+        } catch (Exception e) {
+            model.addAttribute("error", "Error: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    @PostMapping("/accounts/{id}/deposit")
+    public String doDeposit(@PathVariable Long id,
+                            @RequestParam java.math.BigDecimal amount,
+                            @RequestParam(required = false) String description,
+                            Authentication authentication,
+                            RedirectAttributes redirectAttributes) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) return "redirect:/login";
+            // Server-side validation: amount must be > 0
+            if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                redirectAttributes.addFlashAttribute("error", "El monto debe ser mayor a 0.");
+                return "redirect:/accounts/" + id + "/deposit";
+            }
+            // Verify ownership: only owner can deposit to this account via UI
+            AccountDTO account = accountService.getById(id);
+            CustomUserDetailsImpl userDetails = (CustomUserDetailsImpl) authentication.getPrincipal();
+            if (!account.getUserId().equals(userDetails.getId())) {
+                redirectAttributes.addFlashAttribute("error", "No tienes permiso para depositar en esta cuenta.");
+                return "redirect:/accounts/" + id + "/deposit";
+            }
+
+            // Perform deposit
+            transactionService.deposit(id, amount, description);
+            redirectAttributes.addFlashAttribute("success", "Depósito realizado: $" + amount);
+            return "redirect:/accounts/" + id;
+        } catch (Exception e) {
+            // On error, redirect back to deposit form so user sees the message
+            log.error("Error performing deposit for account {}", id, e);
+            redirectAttributes.addFlashAttribute("error", "Error al depositar: " + e.getMessage());
+            return "redirect:/accounts/" + id + "/deposit";
+        }
+    }
+
     @GetMapping("/transactions")
-    public String transactions(@RequestParam Long accountId, Model model, Authentication authentication) {
+    public String transactions(@RequestParam Long accountId, @RequestParam(defaultValue = "0") int page, Model model, Authentication authentication) {
         try {
             if (authentication != null && authentication.isAuthenticated()) {
                 CustomUserDetailsImpl userDetails = (CustomUserDetailsImpl) authentication.getPrincipal();
@@ -237,11 +292,14 @@ public class WebController {
                     return "error";
                 }
                 
-                // Obtener todas las transacciones de la cuenta
-                List<TransactionDTO> transactions = transactionService.getTransactionsByAccountId(accountId);
-                
+                // Paginate transactions (15 per page)
+                Pageable pageable = PageRequest.of(Math.max(0, page), 15, Sort.by(Sort.Direction.DESC, "timestamp"));
+                Page<TransactionDTO> transactionsPage = transactionService.getTransactionsByAccountId(accountId, pageable);
+
                 model.addAttribute("account", account);
-                model.addAttribute("transactions", transactions);
+                model.addAttribute("transactionsPage", transactionsPage);
+                model.addAttribute("currentPage", transactionsPage.getNumber());
+                model.addAttribute("totalPages", transactionsPage.getTotalPages());
                 model.addAttribute("username", userDetails.getUsername());
                 return "transactions";
             } else {
@@ -266,13 +324,14 @@ public class WebController {
                     return "error";
                 }
                 
-                // Obtener todas las cuentas del mismo banco para mostrar en el formulario de destino
-                List<AccountDTO> allAccounts = accountService.getAllAccounts();
-                // Filtrar solo cuentas del mismo banco y excluir la cuenta actual
-                List<AccountDTO> destinationAccounts = allAccounts.stream()
-                        .filter(acc -> !acc.getId().equals(accountId))
-                        .filter(acc -> acc.getBankCode() != null && acc.getBankCode().equals(account.getBankCode()))
-                        .toList();
+        // Obtener todas las cuentas del mismo banco para mostrar en el formulario de destino
+        List<AccountDTO> allAccounts = accountService.getAllAccounts();
+        // Filtrar solo cuentas del mismo banco que pertenezcan al usuario logueado y excluir la cuenta actual
+        List<AccountDTO> destinationAccounts = allAccounts.stream()
+            .filter(acc -> !acc.getId().equals(accountId))
+            .filter(acc -> acc.getBankCode() != null && acc.getBankCode().equals(account.getBankCode()))
+            .filter(acc -> acc.getUserId() != null && acc.getUserId().equals(userDetails.getId()))
+            .toList();
                 
                 model.addAttribute("account", account);
                 model.addAttribute("destinationAccounts", destinationAccounts);

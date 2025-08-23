@@ -59,8 +59,13 @@ public class CardPaymentServiceImpl implements CardPaymentService {
             log.debug("Bank response for card charge: {}", result);
             // Si el pago fue exitoso, registrar en la tabla payments
             if (result != null && result.isSuccess()) {
+        // Prefer the account number returned by the bank when available (it represents the actual debited account)
+        String payerAccount = result.getFromAccountNumber() != null && !result.getFromAccountNumber().isBlank()
+                ? result.getFromAccountNumber()
+                : request.getCardNumber();
+
         Payment payment = Payment.builder()
-            .payerAccount(request.getCardNumber())
+            .payerAccount(payerAccount)
             .payeeAccount(bankReq.getToAccountId() != null ? String.valueOf(bankReq.getToAccountId()) : "")
             .amount(request.getAmount() != null ? request.getAmount().doubleValue() : 0.0)
                         .currency("PEN")

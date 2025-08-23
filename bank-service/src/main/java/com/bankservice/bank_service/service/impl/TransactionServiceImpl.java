@@ -9,10 +9,12 @@ import com.bankservice.bank_service.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -107,10 +109,40 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    public void deposit(Long toAccountId, java.math.BigDecimal amount, String description) {
+    if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+        throw new IllegalArgumentException("El monto debe ser mayor a 0");
+    }
+
+    Account to = accountRepository.findById(toAccountId)
+        .orElseThrow(() -> new RuntimeException("Cuenta destino no encontrada"));
+
+    to.setBalance(to.getBalance().add(amount));
+    accountRepository.save(to);
+
+    Transaction transaction = Transaction.builder()
+        .fromAccount(null)
+        .toAccount(to)
+        .amount(amount)
+        .description(description == null ? "Depósito" : description)
+        .timestamp(java.time.LocalDateTime.now())
+        .build();
+
+    transactionRepository.save(transaction);
+    }
+
+    @Override
     public List<TransactionDTO> getTransactionsByAccountId(Long accountId) {
         List<Transaction> transactions = transactionRepository.findByAccountId(accountId);
         System.out.println("DEBUG: Found " + transactions.size() + " transactions for account " + accountId);
         return transactions.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<TransactionDTO> getTransactionsByAccountId(Long accountId, Pageable pageable) {
+        Page<Transaction> page = transactionRepository.findByAccountId(accountId, pageable);
+        List<TransactionDTO> dtos = page.getContent().stream().map(this::convertToDTO).collect(Collectors.toList());
+        return new PageImpl<>(dtos, pageable, page.getTotalElements());
     }
 
     private TransactionDTO convertToDTO(Transaction transaction) {
@@ -118,13 +150,16 @@ public class TransactionServiceImpl implements TransactionService {
                           " - fromAccount: " + (transaction.getFromAccount() != null ? transaction.getFromAccount().getId() : "null") +
                           " - toAccount: " + (transaction.getToAccount() != null ? transaction.getToAccount().getId() : "null"));
         
-        return TransactionDTO.builder()
-                .id(transaction.getId())
-                .fromAccountId(transaction.getFromAccount().getId())
-                .toAccountId(transaction.getToAccount() != null ? transaction.getToAccount().getId() : null)
-                .amount(transaction.getAmount())
-                .description(transaction.getDescription())
-                .date(transaction.getTimestamp())
-                .build();
+    Long fromId = transaction.getFromAccount() != null ? transaction.getFromAccount().getId() : null;
+    Long toId = transaction.getToAccount() != null ? transaction.getToAccount().getId() : null;
+
+    return TransactionDTO.builder()
+        .id(transaction.getId())
+        .fromAccountId(fromId)
+        .toAccountId(toId)
+        .amount(transaction.getAmount())
+        .description(transaction.getDescription())
+        .date(transaction.getTimestamp())
+        .build();
     }
 }
