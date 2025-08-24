@@ -77,4 +77,23 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @PatchMapping("/{username}")
+    public ResponseEntity<?> patchUser(@PathVariable String username, @RequestBody Map<String, Object> body) {
+        String email = body.containsKey("email") ? (String) body.get("email") : null;
+        String fullName = body.containsKey("fullName") ? (String) body.get("fullName") : null;
+        User updated = userService.updateUserByUsername(username, email, fullName);
+        if (updated == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{username}/password")
+    public ResponseEntity<?> changePassword(@PathVariable String username, @RequestBody Map<String, String> body) {
+        String current = body.get("currentPassword");
+        String nw = body.get("newPassword");
+        if (current == null || nw == null) return ResponseEntity.status(400).body(Map.of("message","missing fields"));
+        boolean ok = userService.changePassword(username, current, nw);
+        if (!ok) return ResponseEntity.status(403).body(Map.of("message","invalid current password"));
+        return ResponseEntity.ok(Map.of("message","password changed"));
+    }
 }

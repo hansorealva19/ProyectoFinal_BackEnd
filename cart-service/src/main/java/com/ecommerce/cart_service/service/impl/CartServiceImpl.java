@@ -59,7 +59,7 @@ public class CartServiceImpl implements CartService {
             }
         }
         if (requestedQty + existingQty > availableStock) {
-            throw new RuntimeException("Requested quantity exceeds available stock. Available=" + availableStock + " requested=" + (requestedQty + existingQty));
+            throw new com.ecommerce.cart_service.exception.InsufficientStockException("Requested quantity exceeds available stock. Available=" + availableStock + " requested=" + (requestedQty + existingQty));
         }
 
         // If the cart already contains the same productId, merge quantities instead of adding a duplicate entry

@@ -36,8 +36,8 @@
                     <td>
                         <div class="input-group input-group-sm">
                             <button class="btn btn-outline-secondary cart-dec-btn" type="button">−</button>
-                            <input type="number" class="form-control text-center cart-qty-input" min="0" th:value="${item.quantity}" />
-                            <button class="btn btn-outline-secondary cart-inc-btn" type="button">+</button>
+                            <input type="number" class="form-control text-center cart-qty-input" min="0" th:value="${item.quantity}" th:attr="max=${item.product != null ? item.product.stock : 0}" />
+                            <button class="btn btn-outline-secondary cart-inc-btn" type="button" th:attr="disabled=${(item.product != null and item.product.stock != null) ? (item.quantity >= item.product.stock) : false}">+</button>
                         </div>
                     </td>
                     <td><span th:text="${item.total != null ? 'S/ ' + #numbers.formatDecimal(item.total, 1, 'POINT', 2, 'COMMA') : 'S/ 0.00'}">S/ 0.00</span></td>
@@ -75,5 +75,24 @@
 
 <!-- scripts -->
 <div th:replace="~{fragments/scripts :: scripts}"></div>
+
+<!-- Confirm remove modal (used when quantity becomes 0) -->
+<div class="modal fade" id="confirmRemoveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmRemoveMessage">¿Deseas eliminar este producto del carrito?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="confirmRemoveBtn" class="btn btn-danger">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

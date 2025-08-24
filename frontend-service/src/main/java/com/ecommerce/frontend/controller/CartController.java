@@ -88,7 +88,7 @@ public class CartController {
     // AJAX handler: respond 200/500 and avoid redirect so fetch() callers work well
     @PostMapping(value = "/cart/add", headers = "X-Requested-With=XMLHttpRequest")
     @ResponseBody
-    public ResponseEntity<java.util.Map<String, Integer>> addToCartAjax(@RequestParam Long productId,
+    public ResponseEntity<?> addToCartAjax(@RequestParam Long productId,
                                                 @RequestParam(defaultValue = "1") int quantity,
                                                 HttpServletRequest request,
                                                 HttpSession session,
@@ -114,9 +114,20 @@ public class CartController {
                 int count = 0; for (com.ecommerce.frontend.model.CartItemViewModel it : items) count += it != null ? it.getQuantity() : 0;
                 return ResponseEntity.ok(java.util.Map.of("count", count));
             }
-            cartService.addToCart(username, productId, quantity, jwt);
-            int count = cartService.getCartCount(username, jwt);
-            return ResponseEntity.ok(java.util.Map.of("count", count));
+            try {
+                cartService.addToCart(username, productId, quantity, jwt);
+                int count = cartService.getCartCount(username, jwt);
+                return ResponseEntity.ok(java.util.Map.of("count", count));
+            } catch (RuntimeException rex) {
+                String m = rex.getMessage() != null ? rex.getMessage() : "";
+                String lower = m.toLowerCase();
+                // Detect stock-related errors and return a friendly Spanish message only
+                if (lower.contains("stock") || lower.contains("sin stock") || lower.contains("available") || lower.contains("exceeds") || lower.contains("excede") || lower.contains("supera") || lower.contains("requested")) {
+                    return ResponseEntity.status(400).body(java.util.Map.of("message", "La cantidad seleccionada supera el stock"));
+                }
+                // For other client errors return a generic Spanish message (avoid exposing raw internals)
+                return ResponseEntity.status(400).body(java.util.Map.of("message", "No se pudo agregar el producto al carrito"));
+            }
         } catch (Exception e) {
             return ResponseEntity.status(500).body(java.util.Map.of("count", 0));
         }

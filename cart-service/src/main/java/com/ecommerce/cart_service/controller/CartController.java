@@ -28,8 +28,17 @@ public class CartController {
     }
 
     @PostMapping("/{userId}/items")
-    public ResponseEntity<Cart> addItem(@PathVariable("userId") Long userId, @RequestBody CartItem item) {
-        return ResponseEntity.ok(cartService.addItem(userId, item));
+    public ResponseEntity<?> addItem(@PathVariable("userId") Long userId, @RequestBody CartItem item) {
+        try {
+            Cart c = cartService.addItem(userId, item);
+            return ResponseEntity.ok(c);
+        } catch (RuntimeException e) {
+            String msg = e.getMessage() != null ? e.getMessage() : "Error adding item";
+            if (msg.toLowerCase().contains("producto no encontrado") || msg.toLowerCase().contains("not found")) {
+                return ResponseEntity.status(404).body(java.util.Map.of("message", "Producto no encontrado", "detail", msg));
+            }
+            return ResponseEntity.status(500).body(java.util.Map.of("message", "Error adding item", "detail", msg));
+        }
     }
 
     @DeleteMapping("/{userId}/items/{itemId}")

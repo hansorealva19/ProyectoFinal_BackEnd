@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Editar Perfil - EcommercePro</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+</head>
+<body class="bg-light profile-page">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="main-container container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white fw-bold">Editar Perfil</div>
+                    <div class="card-body">
+                        <form id="editForm">
+                            <div class="mb-3">
+                                <label class="form-label">Usuario</label>
+                                <input type="text" class="form-control-plaintext" th:value="${user.username}" readonly />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Correo electrónico</label>
+                                <input type="email" name="email" class="form-control-plaintext" th:value="${user.email}" readonly />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nombre completo</label>
+                                <input type="text" name="fullName" class="form-control" th:value="${user.fullName}" required />
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="/profile" class="btn btn-secondary">Cancelar</a>
+                                <button id="saveBtn" class="btn btn-primary">Actualizar datos</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    (function(){
+        function showToast(msg, variant){
+            var container = document.getElementById('ecom-toast-container'); if(!container){ container = document.createElement('div'); container.id='ecom-toast-container'; container.style.position='fixed'; container.style.right='16px'; container.style.bottom='16px'; container.style.zIndex='1080'; document.body.appendChild(container);} 
+            var id='t'+Date.now(); container.insertAdjacentHTML('beforeend','<div id="'+id+'" class="toast align-items-center text-bg-'+(variant||'success')+' border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true"><div class="d-flex"><div class="toast-body">'+msg+'</div><button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button></div></div>'); var el=document.getElementById(id); try{var bs=bootstrap.Toast.getOrCreateInstance(el,{delay:3000}); bs.show(); el.addEventListener('hidden.bs.toast', function(){ el.remove(); }); }catch(e){ setTimeout(function(){ el.remove(); },3000); }
+        }
+    document.getElementById('saveBtn').addEventListener('click', function(e){ e.preventDefault(); var form = document.getElementById('editForm'); var data = new URLSearchParams(); data.append('fullName', form.fullName.value); fetch('/profile',{ method:'POST', body: data, headers:{ 'X-Requested-With':'XMLHttpRequest' } }).then(function(r){ return r.json(); }).then(function(j){ if(j.status === 'ok'){ showToast(j.message||'Perfil actualizado','success'); window.location = '/profile'; } else { showToast(j.message||'No se pudo actualizar','danger'); } }).catch(function(){ showToast('No se pudo actualizar','danger'); }); });
+    })();
+    </script>
+</body>
+</html>

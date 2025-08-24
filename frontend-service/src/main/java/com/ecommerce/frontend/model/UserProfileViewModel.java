@@ -7,5 +7,7 @@ public class UserProfileViewModel {
     private String username;
     private String email;
     private String fullName;
-    private String phone;
+    // Additional read-only/profile metadata
+    private String roles; // comma separated
+    // createdAt/lastLogin removed: not stored in DB in current schema
 }

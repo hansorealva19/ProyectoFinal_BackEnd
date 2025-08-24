@@ -76,6 +76,8 @@ public class CartRestService {
                                 com.ecommerce.frontend.model.ProductViewModel full = prodResp.getBody();
                                 pv.setCategory(full.getCategory());
                                 pv.setImageUrl(full.getImageUrl());
+                                // also propagate stock so the frontend can limit quantity inputs
+                                pv.setStock(full.getStock());
                             }
                         }
                     } catch (Exception e) {
@@ -114,8 +116,44 @@ public class CartRestService {
             // Call cart-service endpoint to add item to user's cart
             org.springframework.http.HttpEntity<CartItemViewModel> entity = new org.springframework.http.HttpEntity<>(new CartItemViewModel(productId, quantity, username), headers);
             String url = cartServiceUrl + "/api/cart/" + userId + "/items";
-            restTemplate.exchange(url, org.springframework.http.HttpMethod.POST, entity, Void.class);
+            try {
+                restTemplate.exchange(url, org.springframework.http.HttpMethod.POST, entity, Void.class);
+            } catch (org.springframework.web.client.HttpClientErrorException he) {
+                // propagate client errors with body so controller can surface friendly messages
+                if (he.getStatusCode().is4xxClientError()) {
+                    String body = he.getResponseBodyAsString();
+                    try {
+                        com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+                        java.util.Map m = om.readValue(body, java.util.Map.class);
+                        String message = m.getOrDefault("message", body).toString();
+                        throw new RuntimeException(message);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(body);
+                    }
+                }
+                throw he;
+            }
         } catch (Exception ex) {
+            // Try to unwrap HttpClientErrorException from the cause chain to extract server-provided message
+            Throwable cause = ex;
+            while (cause != null) {
+                if (cause instanceof org.springframework.web.client.RestClientResponseException) {
+                    org.springframework.web.client.RestClientResponseException he = (org.springframework.web.client.RestClientResponseException) cause;
+                    String body = he.getResponseBodyAsString();
+                    log.debug("CartRestService received non-2xx response: status={}, body={}", he.getRawStatusCode(), body);
+                    if (body != null && !body.isBlank()) {
+                        try {
+                            com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+                            java.util.Map m = om.readValue(body, java.util.Map.class);
+                            String message = m.getOrDefault("message", body).toString();
+                            throw new RuntimeException(message, ex);
+                        } catch (Exception parseEx) {
+                            throw new RuntimeException(body, ex);
+                        }
+                    }
+                }
+                cause = cause.getCause();
+            }
             throw new RuntimeException("Error al agregar al carrito", ex);
         }
     }
@@ -257,16 +295,34 @@ public class CartRestService {
                         restTemplate.exchange(delUrl, org.springframework.http.HttpMethod.DELETE, entity, Void.class);
                         return;
                     } else {
-                        // To change quantity, remove and re-add with new quantity (cart-service addItem just appends, so we remove then add with desired quantity)
-                        String delUrl = cartServiceUrl + "/api/cart/" + userId + "/items/" + itemId;
-                        restTemplate.exchange(delUrl, org.springframework.http.HttpMethod.DELETE, entity, Void.class);
-                        java.util.Map<String,Object> addBody = new java.util.HashMap<>();
-                        addBody.put("productId", productId);
-                        addBody.put("quantity", quantity);
-                        org.springframework.http.HttpEntity<Object> addEntity = new org.springframework.http.HttpEntity<>(addBody, headers);
-                        String addUrl = cartServiceUrl + "/api/cart/" + userId + "/items";
-                        restTemplate.exchange(addUrl, org.springframework.http.HttpMethod.POST, addEntity, java.util.Map.class);
-                        return;
+                        // Determine existing quantity so we can add only the positive delta when increasing
+                        Object existingQtyObj = map.get("quantity");
+                        int existingQty = existingQtyObj instanceof Number ? ((Number) existingQtyObj).intValue() : 0;
+                        int delta = quantity - existingQty;
+                        if (delta == 0) {
+                            return; // nothing to do
+                        }
+                        if (delta > 0) {
+                            // Only increase by delta: avoid deleting the existing item first so failures won't remove the item
+                            java.util.Map<String,Object> addBody = new java.util.HashMap<>();
+                            addBody.put("productId", productId);
+                            addBody.put("quantity", delta);
+                            org.springframework.http.HttpEntity<Object> addEntity = new org.springframework.http.HttpEntity<>(addBody, headers);
+                            String addUrl = cartServiceUrl + "/api/cart/" + userId + "/items";
+                            restTemplate.exchange(addUrl, org.springframework.http.HttpMethod.POST, addEntity, java.util.Map.class);
+                            return;
+                        } else {
+                            // delta < 0: for decreases, remove and re-add with new quantity (preserves old behavior)
+                            String delUrl = cartServiceUrl + "/api/cart/" + userId + "/items/" + itemId;
+                            restTemplate.exchange(delUrl, org.springframework.http.HttpMethod.DELETE, entity, Void.class);
+                            java.util.Map<String,Object> addBody = new java.util.HashMap<>();
+                            addBody.put("productId", productId);
+                            addBody.put("quantity", quantity);
+                            org.springframework.http.HttpEntity<Object> addEntity = new org.springframework.http.HttpEntity<>(addBody, headers);
+                            String addUrl = cartServiceUrl + "/api/cart/" + userId + "/items";
+                            restTemplate.exchange(addUrl, org.springframework.http.HttpMethod.POST, addEntity, java.util.Map.class);
+                            return;
+                        }
                     }
                 }
             }

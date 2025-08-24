@@ -14,4 +14,6 @@ public interface UserService {
     Optional<User> getUserByUsername(String username);
     Optional<User> getUserByEmail(String email);
     PasswordEncoder getPasswordEncoder();
+    User updateUserByUsername(String username, String email, String fullName);
+    boolean changePassword(String username, String currentPassword, String newPassword);
 }
