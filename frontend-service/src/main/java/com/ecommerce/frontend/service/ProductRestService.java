@@ -137,6 +137,45 @@ public class ProductRestService {
         }
     }
 
+    public ProductViewModel createProduct(java.util.Map<String, Object> productFields, org.springframework.web.multipart.MultipartFile image, String jwt) {
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            if (jwt != null) headers.setBearerAuth(jwt);
+            headers.setContentType(org.springframework.http.MediaType.MULTIPART_FORM_DATA);
+
+            org.springframework.util.LinkedMultiValueMap<String, Object> body = new org.springframework.util.LinkedMultiValueMap<>();
+
+            // product JSON as part named "product"
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String productJson = mapper.writeValueAsString(productFields);
+
+            // Attach the JSON product part with application/json content type so @RequestPart("product") is parsed correctly
+            org.springframework.http.HttpHeaders prodPartHeaders = new org.springframework.http.HttpHeaders();
+            prodPartHeaders.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            org.springframework.http.HttpEntity<String> productPart = new org.springframework.http.HttpEntity<>(productJson, prodPartHeaders);
+            body.add("product", productPart);
+
+            if (image != null && !image.isEmpty()) {
+                org.springframework.core.io.ByteArrayResource bar = new org.springframework.core.io.ByteArrayResource(image.getBytes()){
+                    @Override
+                    public String getFilename() { return image.getOriginalFilename(); }
+                };
+                org.springframework.http.HttpHeaders imgPartHeaders = new org.springframework.http.HttpHeaders();
+                try {
+                    if (image.getContentType() != null) imgPartHeaders.setContentType(org.springframework.http.MediaType.parseMediaType(image.getContentType()));
+                } catch (Exception ignored) { }
+                org.springframework.http.HttpEntity<org.springframework.core.io.ByteArrayResource> imagePart = new org.springframework.http.HttpEntity<>(bar, imgPartHeaders);
+                body.add("image", imagePart);
+            }
+
+            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, Object>> requestEntity = new org.springframework.http.HttpEntity<>(body, headers);
+            org.springframework.http.ResponseEntity<ProductViewModel> resp = restTemplate.postForEntity(productServiceUrl + "/api/products", requestEntity, ProductViewModel.class);
+            return resp.getBody();
+        } catch (Exception ex) {
+            throw new RuntimeException("Error creating product", ex);
+        }
+    }
+
     /**
      * Calls the product-service stats endpoint to obtain counts per category and
      * returns a simple list of category names.

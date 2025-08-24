@@ -94,5 +94,55 @@
         </div>
     </div>
 </div>
+
+<!-- Expired payment notice modal -->
+<div class="modal fade" id="expiredPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h5 class="modal-title">Tiempo de pago expirado</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                                <p>Tu sesión de pago expiró. Has sido redirigido al carrito. Pulsa Aceptar para continuar.</p>
+                        </div>
+                        <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+                        </div>
+                </div>
+        </div>
+</div>
+
+<script>
+        (function(){
+            try {
+                const params = new URLSearchParams(window.location.search);
+                function removeNoticeParam() {
+                    try {
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('notice');
+                        const clean = url.pathname + (url.search ? ('?' + url.searchParams.toString()) : '');
+                        window.history.replaceState(null, '', clean);
+                    } catch(e) { /* ignore */ }
+                }
+                if (params.get('notice') === 'expired_payment') {
+                    // show bootstrap modal
+                    var modalEl = document.getElementById('expiredPaymentModal');
+                    if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+                        var m = new bootstrap.Modal(modalEl);
+                        m.show();
+                        // ensure URL is cleaned immediately so reload won't re-open the modal
+                        removeNoticeParam();
+                        // also remove when modal is closed (defensive)
+                        modalEl.addEventListener('hidden.bs.modal', function(){ removeNoticeParam(); });
+                    } else if (modalEl) {
+                        // fallback: simple alert
+                        alert('Tu sesión de pago expiró. Has sido redirigido al carrito.');
+                        removeNoticeParam();
+                    }
+                }
+            } catch(e) { /* ignore */ }
+        })();
+</script>
 </body>
 </html>

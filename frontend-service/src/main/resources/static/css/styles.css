@@ -183,3 +183,35 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 #ecom-toast-container .toast .toast-body { font-weight: 600; }
 #ecom-toast-container { max-width: 360px; }
  
+/* Audit page visual improvements */
+.audit-card { max-width: 980px; margin: 0 auto; }
+.audit-actions { display:flex; gap:0.6rem; }
+.btn-download-csv { background: linear-gradient(90deg,#20c997,#38d9a9); color: #fff; border: none; }
+.btn-download-csv:hover { filter: brightness(0.95); }
+.btn-print { background: linear-gradient(90deg,#4dabf7,#228be6); color:#fff; border:none; }
+.btn-print:hover { filter: brightness(0.95); }
+
+/* Table improvements */
+.table thead th { border-bottom: 2px solid rgba(0,0,0,0.06); }
+.table tbody tr { transition: background 0.15s ease, transform 0.08s ease; }
+.table tbody tr:hover { background: linear-gradient(90deg, rgba(91,108,255,0.03), rgba(47,181,255,0.02)); transform: translateY(-1px); }
+.table td, .table th { vertical-align: middle; }
+.table .badge { font-weight:700; letter-spacing:0.4px; padding:0.45rem 0.6rem; border-radius:999px; }
+
+/* Badge colors by action */
+.badge-ORDER_CREATED { background: #6c757d; color:#fff; }
+.badge-ORDER_CONFIRMED { background: #198754; color:#fff; }
+.badge-PAYMENT_FAILED { background: #dc3545; color:#fff; }
+.badge-ORDER_CANCELLED { background: #fd7e14; color:#fff; }
+
+/* Improve pagination placement */
+.audit-footer { max-width:980px; margin: 0 auto; display:flex; justify-content:space-between; align-items:center; padding-top:0.6rem; }
+
+/* Product card image normalization */
+.product-card-img {
+    width: 100%;
+    height: 320px; /* adjust to taste */
+    object-fit: contain;
+    display: block;
+    background: #fff;
+}

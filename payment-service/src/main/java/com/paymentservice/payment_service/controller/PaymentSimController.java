@@ -1,6 +1,8 @@
 package com.paymentservice.payment_service.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.paymentservice.payment_service.repository.PaymentRepository;
 import java.util.Map;
 
-@RestController
+@Controller
 @RequestMapping("/api/payments/sim")
 public class PaymentSimController {
 
@@ -37,7 +39,7 @@ public class PaymentSimController {
         Map<String,Object> body = new java.util.HashMap<>();
         try {
             com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-            body = om.readValue(rawBody, java.util.Map.class);
+            body = om.readValue(rawBody, new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String,Object>>(){});
         } catch (Exception e) {
             // if parsing fails, return bad request
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "invalid JSON"));
@@ -86,8 +88,9 @@ public class PaymentSimController {
                 Long oid = Long.parseLong(orderId.toString());
                     java.net.URI uri = new java.net.URI(orderServiceUrl + "/api/orders/" + oid);
                     org.springframework.http.ResponseEntity<java.util.Map<String,Object>> or = rest.exchange(uri, org.springframework.http.HttpMethod.GET, null, new org.springframework.core.ParameterizedTypeReference<java.util.Map<String,Object>>(){});
-                if (or.getStatusCode().is2xxSuccessful() && or.getBody() != null && or.getBody().get("total") != null) {
-                    amount = new java.math.BigDecimal(or.getBody().get("total").toString());
+                java.util.Map<String,Object> orBody = or != null ? or.getBody() : null;
+                if (or != null && or.getStatusCode().is2xxSuccessful() && orBody != null && orBody.get("total") != null) {
+                    amount = new java.math.BigDecimal(orBody.get("total").toString());
                 }
             } catch (Exception e) {
                 // fallback to client-supplied amount if order lookup fails
@@ -103,8 +106,9 @@ public class PaymentSimController {
                 // call bank-service to get merchant info
                 java.net.URI uri = new java.net.URI(bankServiceUrl + "/api/merchants/" + java.net.URLEncoder.encode(merchantCode, java.nio.charset.StandardCharsets.UTF_8));
                 org.springframework.http.ResponseEntity<java.util.Map<String,Object>> r = rest.exchange(uri, org.springframework.http.HttpMethod.GET, null, new org.springframework.core.ParameterizedTypeReference<java.util.Map<String,Object>>(){});
-                if (r.getStatusCode().is2xxSuccessful() && r.getBody() != null && r.getBody().get("accountId") != null) {
-                    try { toAccountId = Long.parseLong(r.getBody().get("accountId").toString()); } catch (Exception e) { /* ignore */ }
+                java.util.Map<String,Object> rBody = r != null ? r.getBody() : null;
+                if (r != null && r.getStatusCode().is2xxSuccessful() && rBody != null && rBody.get("accountId") != null) {
+                    try { toAccountId = Long.parseLong(rBody.get("accountId").toString()); } catch (Exception e) { /* ignore */ }
                 }
             } catch (Exception e) {
                 // fallback to configured property if bank lookup fails
@@ -495,7 +499,8 @@ public class PaymentSimController {
         try {
             com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
             om.configure(com.fasterxml.jackson.databind.SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-            om.configure(com.fasterxml.jackson.databind.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+            // MapperFeature.configure(...) is deprecated; use setConfig to enable mapper features
+            om.setConfig(om.getSerializationConfig().with(com.fasterxml.jackson.databind.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
             om.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
             return om.writeValueAsString(note);
         } catch (Exception e) {
@@ -503,17 +508,7 @@ public class PaymentSimController {
         }
     }
 
-    private String canonicalJson(Object obj) {
-        try {
-            com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-            om.configure(com.fasterxml.jackson.databind.SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-            om.configure(com.fasterxml.jackson.databind.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
-            om.setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL);
-            return om.writeValueAsString(obj);
-        } catch (Exception e) {
-            return obj.toString();
-        }
-    }
+    // removed unused canonicalJson(Object) overload to reduce warnings - use canonicalJson(Map) for canonicalization
 
     private String signPayload(String payload) {
         try {
@@ -557,9 +552,8 @@ public class PaymentSimController {
 
     // Simple payment UI: GET shows a page with a Confirm button that triggers the POST
     @GetMapping(value = "/confirm", produces = "text/html")
-    public String confirmPage(@RequestParam(name = "orderId", required = false) String orderId) {
+    public String confirmPage(@RequestParam(name = "orderId", required = false) String orderId, Model model) {
         String esc = orderId == null ? "" : orderId;
-        // Try to fetch order total from order-service to prefill amount. If fails, leave empty.
         String amount = "";
         try {
             java.net.URI uri = new java.net.URI(orderServiceUrl + "/api/orders/" + java.net.URLEncoder.encode(esc, java.nio.charset.StandardCharsets.UTF_8));
@@ -568,63 +562,33 @@ public class PaymentSimController {
             if (r != null && r.getStatusCode().is2xxSuccessful() && rbody != null) {
                 Object total = rbody.get("total");
                 if (total != null) amount = total.toString();
+                // compute seconds remaining until auto-cancel: orders expire 1 minute after creation
+                Object createdAtObj = rbody.get("createdAt");
+                long secondsRemaining = 0;
+                if (createdAtObj != null) {
+                    try {
+                        java.time.ZonedDateTime created = java.time.ZonedDateTime.parse(createdAtObj.toString());
+                        java.time.ZonedDateTime expireAt = created.plusMinutes(1);
+                        java.time.ZonedDateTime now = java.time.ZonedDateTime.now(java.time.ZoneId.systemDefault());
+                        long secs = java.time.Duration.between(now, expireAt).getSeconds();
+                        secondsRemaining = Math.max(0, secs);
+                    } catch (Exception ex) {
+                        // if parse fails try LocalDateTime
+                        try {
+                            java.time.LocalDateTime created = java.time.LocalDateTime.parse(createdAtObj.toString());
+                            java.time.LocalDateTime expireAt = created.plusMinutes(1);
+                            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                            long secs = java.time.Duration.between(now, expireAt).getSeconds();
+                            secondsRemaining = Math.max(0, secs);
+                        } catch (Exception ex2) { secondsRemaining = 0; }
+                    }
+                }
+                model.addAttribute("secondsRemaining", secondsRemaining);
             }
-        } catch (Exception e) {
-            // ignore, keep amount empty
-        }
-
-    String html = "<html><head><meta charset='utf-8'><title>Simulate Payment</title>" +
-            "<style>body{font-family:Segoe UI,Roboto,Arial,sans-serif;background:#f6f8fa;color:#222;margin:0;padding:0} .container{max-width:760px;margin:32px auto;background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.08);padding:24px} h3{margin-top:0;color:#0b5cff} label{font-size:0.9rem;color:#333} input,button{font-size:1rem;padding:8px 10px;border:1px solid #dfe3e8;border-radius:6px} input[readonly]{background:#f3f6f9} .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px} .col{flex:1} .divider{height:1px;background:#eef2f6;margin:12px 0} .warning{color:#b00;background:#fff3f3;padding:8px;border-radius:6px;border:1px solid #f5c6cb} .actions{display:flex;justify-content:flex-end;gap:12px;margin-top:12px} button.primary{background:#0b5cff;color:#fff;border:none} pre{background:#0b1222;color:#fff;padding:12px;border-radius:6px;overflow:auto}</style></head><body>" +
-            "<div class='container'>" +
-            "<h3>Simulated payment for order " + esc + "</h3>" +
-            "<p>La pasarela solicitará los datos del comprador. El comercio no verá la cuenta destino.</p>" +
-            "<div class='warning'><strong>ATENCIÓN:</strong> No envíe datos reales. Use números de prueba (p.ej. tarjeta 4111 1111 1111 1111).</div>" +
-            "<form id=\"simPay\">" +
-            "<div class='row'><div class='col'><label>Desde cuenta (fromAccountId)</label><input id=\"fromAccountId\" name=\"fromAccountId\" placeholder=\"e.g. 1234567890\"/></div></div>" +
-            "<div class='divider'></div>" +
-            "<div><strong>O tarjeta (rellene todos los campos para probar tarjeta)</strong></div>" +
-            "<div class='row'><div class='col'><label>Número de tarjeta</label><input id=\"cardNumber\" name=\"cardNumber\" placeholder=\"6911152217239698\"/></div><div class='col'><label>Nombre en la tarjeta</label><input id=\"cardHolder\" name=\"cardHolder\" placeholder=\"Nombre Apellido\"/></div></div>" +
-            "<div class='row'><div class='col'><label>Fecha de expiración (YYYY-MM-DD)</label><input id=\"expirationDate\" name=\"expirationDate\" placeholder=\"2025-12-31\"/></div><div class='col'><label>CVV</label><input id=\"cvv\" name=\"cvv\" placeholder=\"123\"/></div></div>" +
-            "<div class='divider'></div>" +
-            "<div class='row'><div class='col'><label>Monto (autocompletado desde el pedido)</label><input id=\"amount\" name=\"amount\" value=\"" + amount + "\" readonly/></div></div>" +
-            "<input type=\"hidden\" id=\"orderId\" value=\"" + esc + "\"/>" +
-            "<input type=\"hidden\" id=\"merchantCode\" value=\"ecommerce\"/>" +
-            "<div class='actions'><button type=\"submit\" class='primary'>Confirm Payment</button></div>" +
-            "</form>" +
-            "<div id=\"result\"></div>" +
-            "</div>" +
-            "<script>\n" +
-            "(function(){\n" +
-            "  const form = document.getElementById('simPay');\n" +
-            "  form.addEventListener('submit', async function(e){\n" +
-            "    e.preventDefault();\n" +
-            "    const btn = this.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; btn.innerText = 'Processing...'; }\n" +
-            "    const getVal = id => { const el = document.getElementById(id); return el && el.value !== undefined ? el.value.toString().trim() : ''; };\n" +
-            "    const payload = { orderId: getVal('orderId'), merchantCode: getVal('merchantCode') || 'ecommerce' };\n" +
-            "    try { const ikKey = 'idem_' + payload.orderId; let ik = sessionStorage.getItem(ikKey); if (!ik) { ik = ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c=> (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c/4).toString(16)); sessionStorage.setItem(ikKey, ik); } payload.idempotencyKey = ik; } catch(ex) { }\n" +
-            "    const fromAccount = getVal('fromAccountId'); if (fromAccount) { try { payload.fromAccountId = Number(fromAccount); } catch(e) { payload.fromAccountId = fromAccount; } }\n" +
-            "    const cardNumber = getVal('cardNumber'); if (cardNumber) { payload.cardNumber = cardNumber; const ch = getVal('cardHolder'); if (ch) payload.cardHolder = ch; const exp = getVal('expirationDate'); if (exp) payload.expirationDate = exp; const cvv = getVal('cvv'); if (cvv) payload.cvv = cvv; }\n" +
-            "    const amountVal = getVal('amount'); if (amountVal) { try { payload.amount = Number(amountVal); } catch(e) { payload.amount = amountVal; } }\n" +
-            "    try {\n" +
-            "      const r = await fetch('/api/payments/sim/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});\n" +
-            "      const txt = await r.text();\n" +
-            "      try {\n" +
-            "        const j = JSON.parse(txt);\n" +
-            "        // handle bank errors with a friendly message and redirect to cart\n" +
-            "        if (j && (j.bankError || (j.error && String(j.error).toLowerCase().includes('bank')))) {\n" +
-            "          const msg = j.bankError ? j.bankError : 'Hubo un error en el procesamiento del pago. Intente con otra tarjeta o vuelva al carrito.';\n" +
-            "          document.getElementById('result').innerHTML = '<div class=\"alert alert-danger\">' + msg + '</div>';\n" +
-            "          setTimeout(function(){ window.location.href = 'http://localhost:8090/cart'; }, 2000);\n" +
-            "          return;\n" +
-            "        }\n" +
-            "        document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(j,null,2) + '</pre>';\n" +
-            "        if (j && j.status && j.status==='PAID_AND_NOTIFIED') { setTimeout(function(){ window.location.href = 'http://localhost:8090/orders'; }, 600); }\n" +
-            "      } catch(er) { document.getElementById('result').innerText = txt; }\n" +
-            "    } catch(fetchErr) { document.getElementById('result').innerText = 'Network error: ' + fetchErr; }\n" +
-            "  });\n" +
-            "})();\n" +
-            "</script></body></html>";
-        return html;
+        } catch (Exception e) { /* ignore and leave amount empty */ }
+        model.addAttribute("orderId", esc);
+        model.addAttribute("amount", amount);
+        return "payment-sim";
     }
 
     // Debug endpoint: build the canonical payload and signature for an order without sending it.

@@ -48,6 +48,10 @@ public class ProductServiceImpl implements ProductService {
   public ProductDTO createProduct(ProductDTO productDTO) {
     try {
       log.info("Creating product: {}", productDTO);
+      // Ensure boolean flags have sensible defaults to avoid NPEs when DTO fields are missing
+      if (productDTO.getActive() == null) {
+        productDTO.setActive(Boolean.TRUE);
+      }
       // Aquí se implementaría la lógica para convertir ProductDTO a Product y guardarlo en el repositorio
       Product product = convertToEntity(productDTO);
 
@@ -76,6 +80,10 @@ public class ProductServiceImpl implements ProductService {
         if (url != null) {
           productDTO.setImageUrl(url.toString());
         }
+      }
+      // default active if not provided
+      if (productDTO.getActive() == null) {
+        productDTO.setActive(Boolean.TRUE);
       }
       return createProduct(productDTO);
     } catch (Exception e) {

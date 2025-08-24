@@ -2,22 +2,15 @@ package order.controller;
 
 import order.dto.OrderDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableAsync;
 import order.service.OrderService;
 import order.dto.CreateOrderRequest;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import order.dto.PaymentNotification;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -87,6 +80,8 @@ public class OrderController {
 			body.put("id", dto.getId());
 			body.put("total", dto.getTotalAmount());
 			body.put("status", dto.getStatus() != null ? dto.getStatus().name() : null);
+			// include createdAt so payment UI can compute remaining time before auto-cancel
+			body.put("createdAt", dto.getCreatedAt());
 			return ResponseEntity.ok(body);
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(java.util.Map.of("error", e.getMessage()));
@@ -101,7 +96,7 @@ public class OrderController {
 			// debug writes removed
 			// log basic summary after parsing minimal fields for convenience
 			com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-			java.util.Map m = om.readValue(rawBody, java.util.Map.class);
+			java.util.Map<String,Object> m = om.readValue(rawBody, new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String,Object>>(){});
 			Object orderId = m.get("orderId");
 			Object status = m.get("status");
 			org.slf4j.LoggerFactory.getLogger(OrderController.class).info("[OrderController] Payment notification received for orderId={} status={} signature={} ", orderId, status, signature);

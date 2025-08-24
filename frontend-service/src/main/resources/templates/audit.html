@@ -8,33 +8,99 @@
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
-<div class="main-container container">
-    <h2 class="mb-4">Auditoría de Transacciones</h2>
+<div class="main-container container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">Auditoría de Transacciones</h2>
+            <small class="text-muted">Registros de eventos del sistema</small>
+        </div>
+        <div class="audit-actions">
+            <a th:href="@{/audit/download/csv(username=${filterUsername},action=${filterAction},from=${filterFrom},to=${filterTo})}" class="btn btn-download-csv">Descargar CSV</a>
+            <a th:href="@{/audit/print(page=${page},size=${size},username=${filterUsername},action=${filterAction},from=${filterFrom},to=${filterTo})}" target="_blank" class="btn btn-print">Imprimir página</a>
+            <a th:href="@{/audit/print(all=true,username=${filterUsername},action=${filterAction},from=${filterFrom},to=${filterTo})}" target="_blank" class="btn btn-outline-secondary">Imprimir todo</a>
+        </div>
+    </div>
+
+    <form class="row g-3 mb-3" method="get" th:action="@{/audit}">
+        <div class="col-md-3">
+            <label for="username" class="form-label">Usuario</label>
+            <input type="text" id="username" name="username" class="form-control" th:value="${filterUsername}">
+        </div>
+        <div class="col-md-3">
+            <label for="action" class="form-label">Acción</label>
+            <select id="action" name="action" class="form-select">
+                <option value="" th:selected="${filterAction == null}">-- Todos --</option>
+                <option value="ORDER_CREATED" th:selected="${filterAction == 'ORDER_CREATED'}">ORDER_CREATED</option>
+                <option value="PAYMENT_FAILED" th:selected="${filterAction == 'PAYMENT_FAILED'}">PAYMENT_FAILED</option>
+                <option value="ORDER_CANCELLED" th:selected="${filterAction == 'ORDER_CANCELLED'}">ORDER_CANCELLED</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="from" class="form-label">Desde</label>
+            <input type="datetime-local" id="from" name="from" class="form-control" th:value="${filterFrom}">
+        </div>
+        <div class="col-md-3">
+            <label for="to" class="form-label">Hasta</label>
+            <input type="datetime-local" id="to" name="to" class="form-control" th:value="${filterTo}">
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a th:href="@{/audit}" class="btn btn-link">Limpiar</a>
+        </div>
+    </form>
+
     <div th:if="${auditError}" class="alert alert-warning" role="alert">
         No se han podido cargar los registros de auditoría: <span th:text="${auditError}"></span>
     </div>
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>Fecha</th>
-            <th>Usuario</th>
-            <th>Acción</th>
-            <th>Detalle</th>
-        </tr>
-        </thead>
-        <tbody>
-        <!-- Iterar registros de auditoría -->
-        <tr th:if="${#lists.isEmpty(audits)} and !${auditError}">
-            <td colspan="4" class="text-center">No hay registros de auditoría.</td>
-        </tr>
-        <tr th:each="audit : ${audits}">
-            <td th:text="${audit.date}">2025-08-17</td>
-            <td th:text="${audit.user}">usuario</td>
-            <td th:text="${audit.action}">Compra</td>
-            <td th:text="${audit.detail}">Detalle de la acción</td>
-        </tr>
-        </tbody>
-    </table>
+
+    <div class="card shadow-sm audit-card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:180px">Fecha</th>
+                            <th style="width:140px">Usuario</th>
+                            <th style="width:200px">Acción</th>
+                            <th>Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(audits)} and !${auditError}">
+                            <td colspan="4" class="text-center py-4">No hay registros de auditoría.</td>
+                        </tr>
+                        <tr th:each="audit : ${audits}">
+                            <td th:text="${audit.date}">2025-08-17T12:00:00</td>
+                            <td><span th:text="${audit.user}"></span></td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${audit.action} == 'ORDER_CONFIRMED' ? ' bg-success' : (${audit.action} == 'PAYMENT_FAILED' ? ' bg-danger' : (${audit.action} == 'ORDER_CANCELLED' ? ' bg-warning text-dark' : ' bg-secondary'))"
+                                      th:text="${audit.action}"></span>
+                            </td>
+                            <td><small th:text="${audit.detail}"></small></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="audit-footer">
+        <div class="text-muted">Mostrando página <span th:text="${page + 1}"></span> de <span th:text="${totalPages}"></span> — Total: <span th:text="${totalElements}"></span> registros</div>
+        <nav>
+            <ul class="pagination mb-0">
+                <li th:classappend="${page == 0} ? 'disabled'" class="page-item">
+                    <a class="page-link" th:href="@{/audit(page=${page-1},size=${size},username=${filterUsername},action=${filterAction},from=${filterFrom},to=${filterTo})}">Anterior</a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == page} ? 'active'">
+                    <a class="page-link" th:href="@{/audit(page=${i},size=${size},username=${filterUsername},action=${filterAction},from=${filterFrom},to=${filterTo})}" th:text="${i + 1}"></a>
+                </li>
+                <li th:classappend="${page == totalPages - 1} ? 'disabled'" class="page-item">
+                    <a class="page-link" th:href="@{/audit(page=${page+1},size=${size},username=${filterUsername},action=${filterAction},from=${filterFrom},to=${filterTo})}">Siguiente</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
 </div>
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>

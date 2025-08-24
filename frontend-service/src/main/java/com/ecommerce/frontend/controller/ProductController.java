@@ -135,4 +135,31 @@ public class ProductController {
             return "error";
         }
     }
+
+    @PostMapping("/products/create")
+    public String submitCreateProduct(@ModelAttribute com.ecommerce.frontend.model.ProductViewModel form,
+                                      @RequestParam(value = "image", required = false) MultipartFile imageFile,
+                                      HttpSession session,
+                                      Model model) {
+        try {
+            String jwt = null;
+            if (session != null) {
+                Object token = session.getAttribute("JWT");
+                if (token instanceof String) jwt = (String) token;
+            }
+
+            java.util.Map<String,Object> fields = new java.util.HashMap<>();
+            fields.put("name", form.getName());
+            fields.put("description", form.getDescription());
+            fields.put("price", form.getPrice());
+            fields.put("stock", form.getStock());
+            fields.put("category", form.getCategory());
+
+            productService.createProduct(fields, imageFile, jwt);
+            return "redirect:/products";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Error al crear el producto: " + e.getMessage());
+            return "error";
+        }
+    }
 }

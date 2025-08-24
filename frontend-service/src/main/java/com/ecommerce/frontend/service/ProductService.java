@@ -34,6 +34,10 @@ public class ProductService {
             return productRestService.updateProductImage(id, image, jwt);
         }
 
+        public ProductViewModel createProduct(java.util.Map<String,Object> fields, org.springframework.web.multipart.MultipartFile image, String jwt) {
+            return productRestService.createProduct(fields, image, jwt);
+        }
+
     /**
      * Returns a list of available category names by calling the product-service stats endpoint.
      */

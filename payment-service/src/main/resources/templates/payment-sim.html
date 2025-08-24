@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pago</title>
+  <style>
+    body{font-family:Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#f4f7fb,#eef4ff);color:#222;margin:0;padding:24px}
+    .wrap{max-width:980px;margin:28px auto}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .logo{width:56px;height:56px;border-radius:10px;background:#0b5cff;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+    .card{display:flex;gap:18px;background:#fff;border-radius:12px;box-shadow:0 10px 28px rgba(13,38,76,0.06);overflow:hidden}
+    .left{flex:1;padding:22px}
+    .right{width:320px;background:linear-gradient(180deg,#fbfcff,#f6f9ff);padding:22px;border-left:1px solid #eef4ff}
+    h1{font-size:1.125rem;margin:0;color:#0b5cff}
+    p.lead{color:#475569;margin-top:8px;margin-bottom:14px}
+    label{display:block;font-size:0.9rem;color:#334155;margin-bottom:6px}
+    input,button,select{font-size:1rem;padding:10px 12px;border:1px solid #e6edf5;border-radius:8px;width:100%;box-sizing:border-box}
+    input[readonly]{background:#f6f9ff}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .col{flex:1}
+    .muted{font-size:0.85rem;color:#64748b}
+    .warning{background:#fff7ed;color:#92400e;padding:10px;border-radius:8px;border:1px solid #ffedd5;margin-bottom:12px}
+    .actions{display:flex;justify-content:flex-end;gap:12px;margin-top:12px}
+    button.primary{background:#0b5cff;color:#fff;border:none;padding:10px 16px;border-radius:10px;cursor:pointer}
+    .secondary{background:transparent;border:1px solid #dbeafe;color:#0b5cff;border-radius:10px;padding:10px 14px;cursor:pointer}
+    .summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #e6eefb}
+    .summary-total{font-weight:700;font-size:1.05rem;color:#0b254a;margin-top:8px}
+    pre{background:#0b1222;color:#fff;padding:12px;border-radius:6px;overflow:auto;margin-top:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">EC</div>
+      <div>
+  <h1>Pago para la orden <span th:text="${orderId}"></span></h1>
+  <div class="muted">Tiempo restante para pagar: <strong id="countdown">--:--</strong></div>
+        <div class="muted">Pasarela de pagos</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="left">
+        <p class="lead">Complete los datos para completar el pago.</p>
+        <div class="warning"><strong>ATENCIÓN:</strong> Esta es una pasarela de pago de prueba. Para tarjetas de prueba use 4111 1111 1111 1111 o cuentas ficticias.</div>
+
+        <form id="simPay">
+          <div class="row"><div class="col"><label>Desde cuenta (opcional)</label><input id="fromAccountId" name="fromAccountId" placeholder="e.g. 1234567890"/></div></div>
+          <div style="height:8px"></div>
+          <div><strong class="muted">O tarjeta (complete todos los campos para usar tarjeta)</strong></div>
+          <div class="row">
+            <div class="col"><label>Número de tarjeta</label><input id="cardNumber" name="cardNumber" placeholder="4111 1111 1111 1111" autocomplete="cc-number"/></div>
+            <div class="col"><label>Nombre en la tarjeta</label><input id="cardHolder" name="cardHolder" placeholder="Nombre Apellido" autocomplete="cc-name"/></div>
+          </div>
+          <div class="row">
+            <div class="col"><label>Fecha de expiración (YYYY-MM-DD)</label><input id="expirationDate" name="expirationDate" placeholder="2025-12-31" autocomplete="cc-exp"/></div>
+            <div class="col"><label>CVV</label><input id="cvv" name="cvv" placeholder="123" autocomplete="cc-csc"/></div>
+          </div>
+
+          <div style="height:8px"></div>
+          <div class="row"><div class="col"><label>Monto</label><input id="amount" name="amount" th:value="${amount}" readonly/></div></div>
+          <input type="hidden" id="orderId" th:value="${orderId}"/>
+          <input type="hidden" id="merchantCode" value="ecommerce"/>
+
+          <div class="actions"><button type="button" class="secondary" onclick="window.history.back()">Volver</button><button id="confirmBtn" type="submit" class="primary">Confirmar pago</button></div>
+        </form>
+
+        <div id="result"></div>
+      </div>
+
+      <div class="right">
+        <h3 class="muted">Resumen</h3>
+        <div class="summary-row"><div class="muted">Orden</div><div class="muted" th:text="${orderId}"></div></div>
+        <div class="summary-row"><div class="muted">Subtotal</div><div class="muted" th:text="${amount}"></div></div>
+        <div class="summary-total">Total: <span th:text="${amount}"></span></div>
+        <div style="height:12px"></div>
+        <div class="muted">Soporte: soporte@ecommercepro</div>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+  (function(){
+    // countdown timer: secondsRemaining provided by server (seconds until order expiry)
+    const secondsRemaining = /*[[${secondsRemaining}]]*/ 0;
+    const countdownEl = document.getElementById('countdown');
+    const confirmBtn = document.getElementById('confirmBtn');
+    let remaining = parseInt(secondsRemaining, 10) || 0;
+    function formatSecs(s){ const mm = Math.floor(s/60); const ss = Math.max(0, s%60); return String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+  function onExpire(){
+      if (confirmBtn) confirmBtn.disabled = true;
+      if (countdownEl) countdownEl.innerText = '00:00';
+      const msg = 'Has sido redireccionado porque superaste el límite de tiempo para completar el pago.';
+      // show message in the page so user understands why they are being redirected
+      const res = document.getElementById('result');
+      if (res) res.innerHTML = '<div style="padding:12px;background:#fff9db;border-radius:8px;border:1px solid #ffe9a8;color:#7a4f00">' + msg + '</div>';
+      // redirect to frontend cart with a notice param so frontend can surface an alert if desired
+      const redirectUrl = 'http://localhost:8090/cart?notice=' + encodeURIComponent('expired_payment');
+      setTimeout(()=>{ window.location.href = redirectUrl; }, 1400);
+  }
+    if (countdownEl) countdownEl.innerText = formatSecs(remaining);
+    if (remaining <= 0) { onExpire(); }
+    else {
+      const t = setInterval(()=>{ remaining--; if (countdownEl) countdownEl.innerText = formatSecs(remaining); if (remaining <= 0) { clearInterval(t); onExpire(); } }, 1000);
+    }
+
+    const form = document.getElementById('simPay');
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
+      const btn = this.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; btn.innerText = 'Procesando...'; }
+  // prevent submission if time expired
+  if (parseInt(secondsRemaining,10) <= 0) { if (btn) { btn.disabled = false; btn.innerText = 'Confirmar pago'; } const msg = 'Tiempo expirado: vuelva a iniciar el pago desde el carrito.'; const res = document.getElementById('result'); if (res) res.innerHTML = '<div style="padding:10px;background:#fff1f0;border-radius:8px;border:1px solid #ffd6d6;color:#7a1f1f">'+msg+'</div>'; return; }
+      const getVal = id => { const el = document.getElementById(id); return el && el.value !== undefined ? el.value.toString().trim() : ''; };
+      const payload = { orderId: getVal('orderId'), merchantCode: getVal('merchantCode') || 'ecommerce' };
+      try { const ikKey = 'idem_' + payload.orderId; let ik = sessionStorage.getItem(ikKey); if (!ik) { ik = ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c=> (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c/4).toString(16)); sessionStorage.setItem(ikKey, ik); } payload.idempotencyKey = ik; } catch(ex) { }
+      const fromAccount = getVal('fromAccountId'); if (fromAccount) { try { payload.fromAccountId = Number(fromAccount); } catch(e) { payload.fromAccountId = fromAccount; } }
+      const cardNumber = getVal('cardNumber'); if (cardNumber) { payload.cardNumber = cardNumber; const ch = getVal('cardHolder'); if (ch) payload.cardHolder = ch; const exp = getVal('expirationDate'); if (exp) payload.expirationDate = exp; const cvv = getVal('cvv'); if (cvv) payload.cvv = cvv; }
+      const amountVal = getVal('amount'); if (amountVal) { try { payload.amount = Number(amountVal); } catch(e) { payload.amount = amountVal; } }
+      try {
+        const r = await fetch('/api/payments/sim/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const txt = await r.text();
+        try {
+          const j = JSON.parse(txt);
+          if (j && (j.bankError || (j.error && String(j.error).toLowerCase().includes('bank')))) {
+            const msg = j.bankError ? j.bankError : 'Hubo un error en el procesamiento del pago. Intente con otra tarjeta o vuelva al carrito.';
+            document.getElementById('result').innerHTML = '<div style="padding:10px;background:#fff1f0;border-radius:8px;border:1px solid #ffd6d6;color:#7a1f1f">' + msg + '</div>';
+            setTimeout(function(){ window.location.href = 'http://localhost:8090/cart'; }, 1800);
+            return;
+          }
+          document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(j,null,2) + '</pre>';
+          if (j && j.status && j.status==='PAID_AND_NOTIFIED') { setTimeout(function(){ window.location.href = 'http://localhost:8090/orders'; }, 700); }
+        } catch(er) { document.getElementById('result').innerText = txt; }
+      } catch(fetchErr) { document.getElementById('result').innerText = 'Network error: ' + fetchErr; } finally { if (btn) { btn.disabled = false; btn.innerText = 'Confirmar pago'; } }
+
+    });
+  })();
+  </script>
+</body>
+</html>

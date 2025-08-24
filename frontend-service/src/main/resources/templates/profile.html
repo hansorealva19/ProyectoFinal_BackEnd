@@ -15,38 +15,33 @@
                     <div class="card-body">
                         <div th:replace="~{fragments/alerts :: alerts}"></div>
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <h5 class="mb-3">Información de cuenta</h5>
                                 <div class="mb-3">
                                     <label class="form-label">Usuario</label>
-                                    <input type="text" class="form-control-plaintext" th:value="${user.username}" readonly />
+                                    <input type="text" class="form-control-plaintext" th:value="${user.username}" readonly autocomplete="username" />
                                 </div>
                                 <div id="profileForm">
                                     <div class="mb-3">
                                         <label class="form-label">Correo electrónico</label>
-                                        <input type="email" class="form-control-plaintext" th:value="${user.email}" readonly />
+                                        <input type="email" class="form-control-plaintext" th:value="${user.email}" readonly autocomplete="email" />
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Nombre completo</label>
-                                        <input type="text" name="fullName" class="form-control" th:value="${user.fullName}" readonly />
-                                        <!-- Edit name from Edit page only -->
+                                        <input type="text" name="fullName" class="form-control" th:value="${user.fullName}" readonly autocomplete="name" />
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Roles</label>
                                     <input type="text" class="form-control-plaintext" th:value="${user.roles}" readonly />
                                 </div>
-                                <!-- createdAt/lastLogin removed from UI per current DB schema -->
                             </div>
-                            <div class="col-md-6">
-                                <h5 class="mb-3">Contacto y seguridad</h5>
-                                <div class="mb-3">
-                                    <label class="form-label">Contacto</label>
-                                    <div class="text-muted">Sólo los campos existentes en la base de datos pueden editarse (email, nombre completo).</div>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <a href="/profile/edit" class="btn btn-primary mt-1">Actualizar datos</a>
-                                    <button class="btn btn-outline-secondary mt-1" id="btnChangePwd">Cambiar contraseña</button>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12 text-end">
+                                <div id="profileButtons" class="d-flex justify-content-end gap-2">
+                                    <button id="editProfileBtn" class="btn btn-primary">Editar Datos</button>
+                                    <button id="btnChangePwd" type="button" class="btn btn-outline-secondary">Cambiar contraseña</button>
                                 </div>
                             </div>
                         </div>
@@ -83,6 +78,48 @@
 
                     var pwdModal = new bootstrap.Modal(document.getElementById('changePwdModal'));
                     document.getElementById('btnChangePwd').addEventListener('click', function(){ document.getElementById('modalCurrentPwd').value=''; document.getElementById('modalNewPwd').value=''; pwdModal.show(); });
+
+                    // Make profile inputs readonly until 'Editar Datos' is clicked
+                    var editBtn = document.getElementById('editProfileBtn');
+                    var profileForm = document.getElementById('profileForm');
+                    var fullNameInput = profileForm.querySelector('input[name="fullName"]');
+                    var emailInput = profileForm.querySelector('input[type="email"]');
+                    // initially readonly
+                    function setReadonlyState(readonly){
+                        if(fullNameInput) fullNameInput.readOnly = readonly;
+                        if(emailInput) emailInput.readOnly = readonly;
+                        if(readonly){
+                            editBtn.textContent = 'Editar Datos';
+                        } else {
+                            editBtn.textContent = 'Guardar';
+                        }
+                    }
+                    setReadonlyState(true);
+
+                    // create cancel button dynamically when editing
+                    var cancelBtn = document.createElement('button');
+                    cancelBtn.type = 'button';
+                    cancelBtn.className = 'btn btn-secondary d-none';
+                    cancelBtn.id = 'cancelEditBtn';
+                    cancelBtn.textContent = 'Cancelar';
+                    document.getElementById('profileButtons').appendChild(cancelBtn);
+
+                    editBtn.addEventListener('click', function(e){
+                        if(editBtn.textContent === 'Editar Datos'){
+                            setReadonlyState(false);
+                            cancelBtn.classList.remove('d-none');
+                        } else {
+                            // save via fetch to POST /profile as existing edit flow
+                            var data = new URLSearchParams();
+                            if(fullNameInput) data.append('fullName', fullNameInput.value);
+                            fetch('/profile',{ method:'POST', body: data, headers:{ 'X-Requested-With':'XMLHttpRequest' } }).then(function(r){ return r.json(); }).then(function(j){ if(j.status === 'ok'){ showToast(j.message||'Perfil actualizado','success'); setReadonlyState(true); cancelBtn.classList.add('d-none'); } else { showToast(j.message||'No se pudo actualizar','danger'); } }).catch(function(){ showToast('No se pudo actualizar','danger'); });
+                        }
+                    });
+
+                    cancelBtn.addEventListener('click', function(){
+                        // reload page to discard changes
+                        window.location = '/profile';
+                    });
 
                     document.getElementById('savePwdBtn').addEventListener('click', function(){ var form = document.getElementById('pwdForm'); var data = new URLSearchParams(new FormData(form)); fetch('/profile/password',{ method:'POST', body: data, headers:{ 'X-Requested-With':'XMLHttpRequest' } }).then(function(r){ if(!r.ok) throw r; return r.json(); }).then(function(j){ showToast(j.message||'Contraseña cambiada','success'); pwdModal.hide(); }).catch(function(){ showToast('No se pudo cambiar la contraseña','danger'); }); });
 
