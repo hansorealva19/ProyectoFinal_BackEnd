@@ -17,3 +17,8 @@ server:
 # JWT secret (read from env JWT_SECRET or fallback to the user-service default)
 jwt:
   secret: ${JWT_SECRET:Ue7d9Kj4QpLmZ8sR2xvTgH5yVbNc1fR0wYz3AaPqS6tHjK9L}
+
+# Microservice endpoints
+microservices:
+  product-service:
+    url: http://localhost:8083

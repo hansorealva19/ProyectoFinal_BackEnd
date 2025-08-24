@@ -46,6 +46,22 @@ public class CartServiceImpl implements CartService {
         item.setProductName(product.getName());
         item.setUnitPrice(product.getPrice());
     item.setProductCategory(product.getCategory());
+    // Check stock availability before merging/adding
+    int availableStock = product.getStock();
+        int requestedQty = item.getQuantity();
+        int existingQty = 0;
+        if (cart.getItems() != null) {
+            for (CartItem existing : cart.getItems()) {
+                if (existing.getProductId() != null && existing.getProductId().equals(item.getProductId())) {
+                    existingQty = existing.getQuantity();
+                    break;
+                }
+            }
+        }
+        if (requestedQty + existingQty > availableStock) {
+            throw new RuntimeException("Requested quantity exceeds available stock. Available=" + availableStock + " requested=" + (requestedQty + existingQty));
+        }
+
         // If the cart already contains the same productId, merge quantities instead of adding a duplicate entry
         boolean merged = false;
         if (cart.getItems() != null) {

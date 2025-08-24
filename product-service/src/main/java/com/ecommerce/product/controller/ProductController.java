@@ -265,9 +265,9 @@ public class ProductController {
 //  ejemplo: /api/products/1/stock?quantity=5
   public ResponseEntity<Void> updateStock(
   @PathVariable("id") Long id,
-    @RequestParam int quantity
+  @RequestParam(name = "quantity") int quantity
   ) {
-    log.debug("Updating stock for product ID: {}, Quantity: {}", id, quantity);
+  log.info("[PATCH] updateStock called for product ID: {} with quantity: {}", id, quantity);
 
     try {
       productService.updateStock(id, quantity);

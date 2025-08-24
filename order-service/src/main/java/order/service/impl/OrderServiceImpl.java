@@ -13,6 +13,10 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,13 +28,11 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
+import order.repository.StockUpdateFailureRepository;
+import order.domain.StockUpdateFailure;
 import order.repository.PaymentNotificationRecordRepository;
 import order.domain.PaymentNotificationRecord;
 import java.security.MessageDigest;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.util.Base64;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -41,7 +43,17 @@ public class OrderServiceImpl implements OrderService {
 	@Value("${microservices.cart-service.url:http://localhost:8091}")
 	private String cartServiceUrl;
 
-	private final RestTemplate rest = new RestTemplate();
+	@Value("${microservices.product-service.url:http://localhost:8083}")
+	private String productServiceUrl;
+
+	private final RestTemplate rest;
+
+	// initialize RestTemplate with Apache HttpClient to support PATCH
+	public OrderServiceImpl() {
+		CloseableHttpClient httpClient = HttpClients.custom().build();
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+		this.rest = new RestTemplate(requestFactory);
+	}
 
 	@Override
 	public Page<OrderDTO> getOrdersByUser(String username, Pageable pageable) {
@@ -80,6 +92,7 @@ public class OrderServiceImpl implements OrderService {
 		Optional<Order> o = orderRepository.findById(id);
 		return o.map(this::toDTO).orElse(null);
 	}
+
 
 	@Override
 	@Transactional
@@ -208,6 +221,46 @@ public class OrderServiceImpl implements OrderService {
 				org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).error("Failed to mark delivered: {}", e.getMessage(), e);
 			}
 		}, 20, TimeUnit.SECONDS);
+
+		// If the order was confirmed, decrement stock in product-service for each item (best-effort)
+		if (order.getStatus() == OrderStatus.CONFIRMED) {
+			try {
+				for (OrderItem it : order.getItems()) {
+					int qty = it.getQuantity();
+					// product-service expects positive quantities to increase stock; send negative to decrement
+					int delta = -Math.abs(qty);
+					String patchUrl = productServiceUrl + "/api/products/" + it.getProductId() + "/stock?quantity=" + delta;
+					boolean success = false;
+					int attempts = 0;
+					int[] delays = new int[] {500, 1000, 2000}; // ms
+					while (attempts < delays.length && !success) {
+						try {
+							rest.patchForObject(patchUrl, null, Void.class);
+							success = true;
+							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).info("Requested stock update for product {} by {} (delta={})", it.getProductId(), qty, delta);
+						} catch (Exception ex) {
+							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Attempt {} to update stock for product {} failed: {}", attempts + 1, it.getProductId(), ex.getMessage());
+							try {
+								Thread.sleep(delays[attempts]);
+							} catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+						}
+						attempts++;
+					}
+					if (!success) {
+						// persist failure for later reconciliation
+						try {
+							StockUpdateFailure failure = new StockUpdateFailure(order.getId(), it.getProductId(), qty, "Failed to update product-service after retries");
+							stockUpdateFailureRepository.save(failure);
+							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Recorded stock update failure for order {} product {} qty {}", order.getId(), it.getProductId(), qty);
+						} catch (Exception rex) {
+							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).error("Failed to persist stock update failure: {}", rex.getMessage());
+						}
+					}
+				}
+			} catch (Exception ex) {
+				org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Error while updating product stock after order confirmation: {}", ex.getMessage());
+			}
+		}
 	}
 
 	@Override
@@ -259,21 +312,18 @@ public class OrderServiceImpl implements OrderService {
 	@Autowired
 	private PaymentNotificationRecordRepository paymentNotificationRecordRepository;
 
+	@Autowired
+	private StockUpdateFailureRepository stockUpdateFailureRepository;
+
 	@Value("${order.webhook.secret:change-me-to-a-strong-secret}")
 	private String webhookSecret;
     
 
 
-	private boolean validateSignature(String payload, String signatureHeader) throws Exception {
-		// signature header expected as base64(hmacSha256(payload, secret))
-		Mac mac = Mac.getInstance("HmacSHA256");
-		mac.init(new SecretKeySpec(webhookSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
-		byte[] raw = mac.doFinal(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-		String expected = Base64.getEncoder().encodeToString(raw);
-		return MessageDigest.isEqual(expected.getBytes(java.nio.charset.StandardCharsets.UTF_8), signatureHeader.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-	}
+	// validateSignature removed (logic inlined where needed)
 
 	// produce a stable JSON representation for signing
+	@SuppressWarnings("unchecked")
 	private String canonicalJson(order.dto.PaymentNotification note) {
 		try {
 			com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
