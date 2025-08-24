@@ -19,4 +19,7 @@ public interface OrderService {
 
 	// alternative: receive the raw JSON body and signature to validate HMAC over exact bytes
 	void handlePaymentNotificationRaw(String rawJson, String signature);
+
+	// Cancel pending orders for a user (used when user empties cart)
+	void cancelPendingOrdersForUser(Long userId, String username);
 }

@@ -80,4 +80,27 @@ public class OrderRestService {
             throw new RuntimeException("Error al obtener pedido por id", ex);
         }
     }
+
+    /**
+     * Best-effort: resolve username -> userId via user-service and call order-service endpoint to cancel pending orders for that user.
+     */
+    public void cancelPendingOrdersForUsername(String username, String jwt) {
+        try {
+            if (username == null || username.trim().isEmpty()) return;
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            if (jwt != null) headers.setBearerAuth(jwt);
+            org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
+            // resolve userId using user-service endpoint included in frontend app
+            String userResolve = System.getProperty("user.service.url", "http://localhost:8085") + "/api/users/by-username/" + java.net.URLEncoder.encode(username, java.nio.charset.StandardCharsets.UTF_8);
+            org.springframework.web.client.RestTemplate rt = this.restTemplate;
+            org.springframework.http.ResponseEntity<Long> ur = rt.exchange(userResolve, org.springframework.http.HttpMethod.GET, entity, Long.class);
+            Long userId = ur.getBody();
+            if (userId == null) return;
+            String cancelUrl = orderServiceUrl + "/api/orders/user/" + userId + "/cancel-pending?username=" + java.net.URLEncoder.encode(username, java.nio.charset.StandardCharsets.UTF_8);
+            // POST without body
+            rt.postForEntity(cancelUrl, new org.springframework.http.HttpEntity<>(headers), Void.class);
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(OrderRestService.class).warn("Failed to cancel pending orders for {}: {}", username, e.getMessage());
+        }
+    }
 }

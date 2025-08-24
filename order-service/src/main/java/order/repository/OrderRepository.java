@@ -10,4 +10,6 @@ import order.domain.Order;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 	Page<Order> findByUserName(String userName, Pageable pageable);
+	java.util.List<order.domain.Order> findByStatusAndCreatedAtBefore(order.domain.OrderStatus status, java.time.LocalDateTime before);
+	java.util.List<order.domain.Order> findByUserIdAndStatus(Long userId, order.domain.OrderStatus status);
 }

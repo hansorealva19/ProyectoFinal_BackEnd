@@ -1,6 +1,7 @@
 package com.ecommerce.frontend.controller;
 
 import com.ecommerce.frontend.service.CartService;
+import com.ecommerce.frontend.service.OrderRestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequiredArgsConstructor
 public class CartController {
     private final CartService cartService;
+    private final OrderRestService orderRestService;
 
     @GetMapping("/cart")
     public String cart(Model model, HttpSession session,
@@ -138,6 +140,22 @@ public class CartController {
         String username = (String) session.getAttribute("USERNAME");
         String jwt = (String) session.getAttribute("JWT");
         try {
+            // pre-check: fetch latest order for this user to detect if a previous order was cancelled
+            try {
+                java.util.Map<String,Object> ordersResp = orderRestService.getOrdersByUser(username, 0, 1, jwt);
+                if (ordersResp != null && ordersResp.containsKey("orders")) {
+                    java.util.List<com.ecommerce.frontend.model.OrderViewModel> ol = (java.util.List<com.ecommerce.frontend.model.OrderViewModel>) ordersResp.get("orders");
+                    if (ol != null && !ol.isEmpty()) {
+                        String s = ol.get(0).getStatus();
+                        if (s != null && s.equalsIgnoreCase("CANCELLED")) {
+                            org.slf4j.LoggerFactory.getLogger(CartController.class).info("Latest order for user {} is CANCELLED; proceeding to create a new order", username);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                // non-fatal: continue with checkout
+                org.slf4j.LoggerFactory.getLogger(CartController.class).debug("Could not pre-check latest order status: {}", ex.getMessage());
+            }
             String paymentUrl = cartService.checkout(username, jwt);
             if (paymentUrl != null && !paymentUrl.isBlank()) {
                 // redirect the browser to the payment UI (simulated)
@@ -154,6 +172,27 @@ public class CartController {
             model.addAttribute("errorMessage", "No se pudo procesar la compra. Intente más tarde.");
         }
         return "redirect:/orders";
+    }
+
+    // Internal endpoint called by client JS before clearing the cart. Attempts to cancel any PENDING orders
+    // for the current authenticated user by calling order-service via rest template helper in CartService.
+    @PostMapping(value = "/internal/cancel-pending-before-clear", headers = "X-Requested-With=XMLHttpRequest")
+    @ResponseBody
+    public ResponseEntity<?> cancelPendingBeforeClear(HttpSession session) {
+        try {
+            String username = (String) session.getAttribute("USERNAME");
+            if (username == null) return ResponseEntity.ok().build();
+            String jwt = (String) session.getAttribute("JWT");
+            try {
+                orderRestService.cancelPendingOrdersForUsername(username, jwt);
+            } catch (Exception ex) {
+                // best-effort only; ignore errors so cart clear proceeds
+                org.slf4j.LoggerFactory.getLogger(CartController.class).warn("Failed to cancel pending orders for {}: {}", username, ex.getMessage());
+            }
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(java.util.Map.of("message", "error"));
+        }
     }
 
     // Update quantity (AJAX)

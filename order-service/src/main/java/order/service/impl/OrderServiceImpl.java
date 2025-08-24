@@ -32,6 +32,7 @@ import order.repository.StockUpdateFailureRepository;
 import order.domain.StockUpdateFailure;
 import order.repository.PaymentNotificationRecordRepository;
 import order.domain.PaymentNotificationRecord;
+import order.service.AuditService;
 import java.security.MessageDigest;
 
 @Service
@@ -54,6 +55,9 @@ public class OrderServiceImpl implements OrderService {
 		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 		this.rest = new RestTemplate(requestFactory);
 	}
+
+	@org.springframework.beans.factory.annotation.Autowired
+	private AuditService auditService;
 
 	@Override
 	public Page<OrderDTO> getOrdersByUser(String username, Pageable pageable) {
@@ -84,6 +88,7 @@ public class OrderServiceImpl implements OrderService {
 
 		order.recalculateTotal();
 		Order saved = orderRepository.save(order);
+		try { auditService.record(saved.getUserName(), "ORDER_CREATED", "Order id:"+saved.getId()+" total:"+saved.getTotalAmount()); } catch (Exception e) { org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Failed to record audit for order create: {}", e.getMessage()); }
 		return toDTO(saved);
 	}
 
@@ -152,10 +157,16 @@ public class OrderServiceImpl implements OrderService {
 		} else if ("SUCCESS".equalsIgnoreCase(nstatus)) {
 			order.setStatus(OrderStatus.CONFIRMED);
 			orderRepository.save(order);
+			try { auditService.record(order.getUserName(), "ORDER_CONFIRMED", "Order id:"+order.getId()); } catch (Exception e) { org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Failed to record audit for order confirm: {}", e.getMessage()); }
 		} else if ("FAILED".equalsIgnoreCase(nstatus)) {
 			// mark as cancelled for failed payments to avoid leaving orders in limbo
-			order.setStatus(OrderStatus.CANCELLED);
+			String reason = note.getMessage();
+			if (reason == null || reason.isBlank()) reason = "Payment failed";
+			// basic sanitization: redact long digit sequences
+			try { reason = reason.replaceAll("\\d{4,}", "****"); } catch (Exception sx) { /* ignore */ }
+			order.cancel(reason);
 			orderRepository.save(order);
+			try { auditService.record(order.getUserName(), "PAYMENT_FAILED", "Order id:"+order.getId()+" reason:"+reason); } catch (Exception e) { org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Failed to record audit for payment failed: {}", e.getMessage()); }
 		} else {
 			org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).info("Payment notification for order {} has non-terminal status='{}' - leaving order in current state", note.getOrderId(), nstatus);
 		}
@@ -168,43 +179,47 @@ public class OrderServiceImpl implements OrderService {
 			org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Could not persist payment notification record: {}", ex.getMessage());
 		}
 
-		// try clearing cart for this user (best-effort) — add logging, single retry, and fallback to parse notes
-		try {
-			Long uid = order.getUserId();
-			if (uid == null) {
-				// try to parse user id from notes left by cart-service: "Checkout from cart-service user:{userId}"
-				String notes = order.getNotes();
-				if (notes != null) {
-					try {
-						java.util.regex.Matcher m = java.util.regex.Pattern.compile("user:?\\s*(\\d+)").matcher(notes);
-						if (m.find()) {
-							uid = Long.parseLong(m.group(1));
-							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).info("Parsed userId {} from order.notes for order {}", uid, order.getId());
+		// try clearing cart for this user only when order is CONFIRMED (best-effort)
+		if (order.getStatus() == OrderStatus.CONFIRMED) {
+			try {
+				Long uid = order.getUserId();
+				if (uid == null) {
+					// try to parse user id from notes left by cart-service: "Checkout from cart-service user:{userId}"
+					String notes = order.getNotes();
+					if (notes != null) {
+						try {
+							java.util.regex.Matcher m = java.util.regex.Pattern.compile("user:?\\s*(\\d+)").matcher(notes);
+							if (m.find()) {
+								uid = Long.parseLong(m.group(1));
+								org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).info("Parsed userId {} from order.notes for order {}", uid, order.getId());
+							}
+						} catch (Exception px) {
+							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Failed to parse userId from notes for order {}: {}", order.getId(), px.getMessage());
 						}
-					} catch (Exception px) {
-						org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Failed to parse userId from notes for order {}: {}", order.getId(), px.getMessage());
 					}
 				}
-			}
-			if (uid != null) {
-				String clearUrl = cartServiceUrl + "/api/cart/" + uid + "/clear";
-				org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).info("Attempting to clear cart for user {} via {}", uid, clearUrl);
-				try {
-					rest.delete(clearUrl);
-				} catch (Exception e1) {
-					org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("First attempt to clear cart failed for user {}: {} - retrying once", uid, e1.getMessage());
+				if (uid != null) {
+					String clearUrl = cartServiceUrl + "/api/cart/" + uid + "/clear";
+					org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).info("Attempting to clear cart for user {} via {}", uid, clearUrl);
 					try {
-						Thread.sleep(200);
 						rest.delete(clearUrl);
-					} catch (Exception e2) {
-						org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Retry to clear cart failed for user {}: {}", uid, e2.getMessage());
+					} catch (Exception e1) {
+						org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("First attempt to clear cart failed for user {}: {} - retrying once", uid, e1.getMessage());
+						try {
+							Thread.sleep(200);
+							rest.delete(clearUrl);
+						} catch (Exception e2) {
+							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Retry to clear cart failed for user {}: {}", uid, e2.getMessage());
+						}
 					}
+				} else {
+					org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Order {} has no userId and notes did not contain user info; skipping cart clear", order.getId());
 				}
-			} else {
-				org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Order {} has no userId and notes did not contain user info; skipping cart clear", order.getId());
+			} catch (Exception ex) {
+				org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Could not clear cart for order {} (userId maybe null): {}", order.getId(), ex.getMessage());
 			}
-		} catch (Exception ex) {
-			org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Could not clear cart for order {} (userId maybe null): {}", order.getId(), ex.getMessage());
+		} else {
+			org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).info("Not clearing cart for order {} since status is {}", order.getId(), order.getStatus());
 		}
 		// schedule delivery simulation after 20 seconds
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -252,6 +267,7 @@ public class OrderServiceImpl implements OrderService {
 							StockUpdateFailure failure = new StockUpdateFailure(order.getId(), it.getProductId(), qty, "Failed to update product-service after retries");
 							stockUpdateFailureRepository.save(failure);
 							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Recorded stock update failure for order {} product {} qty {}", order.getId(), it.getProductId(), qty);
+								try { auditService.record(order.getUserName(), "STOCK_UPDATE_FAILED", "order:"+order.getId()+" product:"+it.getProductId()+" qty:"+qty); } catch (Exception e) { org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Failed to record audit for stock update failure: {}", e.getMessage()); }
 						} catch (Exception rex) {
 							org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).error("Failed to persist stock update failure: {}", rex.getMessage());
 						}
@@ -260,6 +276,25 @@ public class OrderServiceImpl implements OrderService {
 			} catch (Exception ex) {
 				org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Error while updating product stock after order confirmation: {}", ex.getMessage());
 			}
+		}
+	}
+
+	@Override
+	public void cancelPendingOrdersForUser(Long userId, String username) {
+		try {
+			if (userId == null) return;
+			var list = orderRepository.findByUserIdAndStatus(userId, OrderStatus.PENDING);
+			for (order.domain.Order o : list) {
+				try {
+					o.cancel("Cancelled by user (cart emptied)");
+					orderRepository.save(o);
+					try { auditService.record(username != null ? username : o.getUserName(), "ORDER_CANCELLED", "User cancelled order id:"+o.getId()); } catch (Exception e) { org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Failed to record audit for user-cancelled order: {}", e.getMessage()); }
+				} catch (Exception ex) {
+					org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("Failed to cancel order {}: {}", o.getId(), ex.getMessage());
+				}
+			}
+		} catch (Exception e) {
+			org.slf4j.LoggerFactory.getLogger(OrderServiceImpl.class).warn("cancelPendingOrdersForUser failed: {}", e.getMessage());
 		}
 	}
 

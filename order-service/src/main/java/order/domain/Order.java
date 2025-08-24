@@ -78,6 +78,10 @@ public class Order {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
+  // reason for cancellation (optional)
+  @Column(name = "cancel_reason", length = 500)
+  private String cancelReason;
+
   //  agregar un item al pedido
 //  anade un item al pedido
 //  busienss logic in domain
@@ -120,11 +124,16 @@ public class Order {
 
   //  cancelo el pedido
   public void cancel() {
+    cancel(null);
+  }
+
+  public void cancel(String reason) {
     // no deberia estar en delivered o cancelled
     if (status == OrderStatus.DELIVERED || status == OrderStatus.CANCELLED) {
       throw new IllegalStateException("Order cannot be cancelled in its current state: " + status);
     }
     status = OrderStatus.CANCELLED;
+    this.cancelReason = reason;
   }
 
   //  marca el pedido como enviado

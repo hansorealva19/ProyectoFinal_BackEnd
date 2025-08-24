@@ -13,6 +13,8 @@ import java.util.Map;
 public class PaymentSimController {
 
     private final RestTemplate rest = new RestTemplate();
+    // Executor for sending background notifications to order-service (avoid blocking user response)
+    private final java.util.concurrent.ExecutorService notifyExecutor = java.util.concurrent.Executors.newCachedThreadPool();
 
     @Value("${microservices.order-service.url:http://localhost:8084}")
     private String orderServiceUrl;
@@ -112,12 +114,39 @@ public class PaymentSimController {
             }
 
             if (toAccountId == null) {
-                // Merchant account not configured: do NOT notify order-service or mark order as paid.
-                // This is a deliberate safety measure for production so that orders are not confirmed
-                // when no transfer is possible. Return a developer-friendly payload instead.
+                // Merchant account not configured: do NOT perform transfer. Notify order-service that payment cannot proceed.
                 lastPayload = canonicalJson(note);
                 lastSignature = signPayload(lastPayload);
-                org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).warn("Merchant account not configured (merchantCode={}) - skipping bank transfer and NOT notifying order-service", merchantCode);
+                org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).warn("Merchant account not configured (merchantCode={}) - skipping bank transfer and notifying order-service of FAILED payment", merchantCode);
+                // Build a sanitized failure payload to notify order-service
+                try {
+                    java.util.Map<String,Object> failNote = new java.util.HashMap<>();
+                    failNote.put("orderId", note.get("orderId"));
+                    failNote.put("paymentId", note.get("paymentId"));
+                    failNote.put("status", "FAILED");
+                    String safe = "merchant account not configured - transfer skipped";
+                    failNote.put("message", safe);
+                    String fp = canonicalJson(failNote);
+                    String fsig = signPayload(fp);
+                    org.springframework.http.HttpHeaders fh = new org.springframework.http.HttpHeaders();
+                    if (fsig != null && !fsig.isBlank()) fh.add("X-Signature", fsig);
+                    fh.setContentType(new org.springframework.http.MediaType("application", "json", java.nio.charset.StandardCharsets.UTF_8));
+                    org.springframework.http.HttpEntity<byte[]> fent = new org.springframework.http.HttpEntity<>(fp.getBytes(java.nio.charset.StandardCharsets.UTF_8), fh);
+                    try {
+                        notifyExecutor.submit(() -> {
+                            try {
+                                notifyOrderService(fent, fp, fsig);
+                                org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).info("Asynchronously notified order-service of FAILED payment (no merchant) for order {}", orderId);
+                            } catch (Exception nx) {
+                                org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).warn("Async notify (no merchant) to order-service failed for order {}: {}", orderId, nx.getMessage());
+                            }
+                        });
+                    } catch (Exception nx) {
+                        org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).warn("Failed to schedule notify to order-service of FAILED payment (no merchant) for order {}: {}", orderId, nx.getMessage());
+                    }
+                } catch (Exception exNotify) {
+                    org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).warn("Failed to build/notify failed-payment payload for no-merchant case: {}", exNotify.getMessage());
+                }
                 if (Boolean.TRUE.equals(debugReturn)) {
                     return ResponseEntity.ok(java.util.Map.of("status", "NO_TRANSFER_SKIPPED", "orderId", orderId, "attemptedPayload", lastPayload, "attemptedSignature", lastSignature));
                 }
@@ -349,7 +378,7 @@ public class PaymentSimController {
             // if transfer succeeded, notify order-service
             lastPayload = canonicalJson(note);
             lastSignature = signPayload(lastPayload);
-            // if bank did not perform any transfer/charge, mark payment FAILED and do not notify order-service
+            // if bank did not perform any transfer/charge, mark payment FAILED and notify order-service
             if (!transferSucceeded) {
                 try {
                     if (paymentId != null && paymentRepository != null) {
@@ -394,6 +423,41 @@ public class PaymentSimController {
                 resp.put("error", "bank transfer/charge failed");
                 resp.put("orderId", orderId);
                 if (lastBankError.get() != null) resp.put("bankError", lastBankError.get());
+
+                // Build a sanitized failure notification for order-service so the failure reason appears in audit
+                try {
+                    java.util.Map<String,Object> failNote = new java.util.HashMap<>();
+                    failNote.put("orderId", note.get("orderId"));
+                    failNote.put("paymentId", note.get("paymentId"));
+                    failNote.put("status", "FAILED");
+                    String raw = lastBankError.get();
+                    String safe = raw == null ? "bank transfer/charge failed" : raw;
+                    // basic sanitization: redact long digit sequences (cards/accounts)
+                    try { safe = safe.replaceAll("\\d{4,}", "****"); } catch (Exception sx) { /* ignore sanitization errors */ }
+                    failNote.put("message", safe);
+                    String fp = canonicalJson(failNote);
+                    String fsig = signPayload(fp);
+                    org.springframework.http.HttpHeaders fh = new org.springframework.http.HttpHeaders();
+                    if (fsig != null && !fsig.isBlank()) fh.add("X-Signature", fsig);
+                    fh.setContentType(new org.springframework.http.MediaType("application", "json", java.nio.charset.StandardCharsets.UTF_8));
+                    org.springframework.http.HttpEntity<byte[]> fent = new org.springframework.http.HttpEntity<>(fp.getBytes(java.nio.charset.StandardCharsets.UTF_8), fh);
+                    try {
+                        // send notification asynchronously to avoid blocking the response to the user
+                        notifyExecutor.submit(() -> {
+                            try {
+                                notifyOrderService(fent, fp, fsig);
+                                org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).info("Asynchronously notified order-service of FAILED payment for order {}", orderId);
+                            } catch (Exception nx) {
+                                org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).warn("Async notify to order-service failed for order {}: {}", orderId, nx.getMessage());
+                            }
+                        });
+                    } catch (Exception nx) {
+                        org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).warn("Failed to schedule notify to order-service of FAILED payment for order {}: {}", orderId, nx.getMessage());
+                    }
+                } catch (Exception exNotify) {
+                    org.slf4j.LoggerFactory.getLogger(PaymentSimController.class).warn("Failed to build/notify failed-payment payload: {}", exNotify.getMessage());
+                }
+
                 return ResponseEntity.status(502).body(resp);
             }
             // debug: log payload and signature before notifying order-service

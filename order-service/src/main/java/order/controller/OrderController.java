@@ -112,4 +112,16 @@ public class OrderController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(java.util.Map.of("error", e.getMessage()));
 		}
 	}
+
+	// Cancel pending orders for a user (e.g., when user empties cart)
+	@PostMapping(value = "/user/{userId}/cancel-pending")
+	public ResponseEntity<?> cancelPendingForUser(@PathVariable("userId") Long userId, @RequestParam(value = "username", required = false) String username) {
+		try {
+			orderService.cancelPendingOrdersForUser(userId, username);
+			return ResponseEntity.ok().build();
+		} catch (Exception e) {
+			org.slf4j.LoggerFactory.getLogger(OrderController.class).error("Failed to cancel pending orders for user {}: {}", userId, e.getMessage(), e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(java.util.Map.of("error", e.getMessage()));
+		}
+	}
 }

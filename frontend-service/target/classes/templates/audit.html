@@ -10,6 +10,9 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <div class="main-container container">
     <h2 class="mb-4">Auditoría de Transacciones</h2>
+    <div th:if="${auditError}" class="alert alert-warning" role="alert">
+        No se han podido cargar los registros de auditoría: <span th:text="${auditError}"></span>
+    </div>
     <table class="table table-bordered">
         <thead>
         <tr>
@@ -21,6 +24,9 @@
         </thead>
         <tbody>
         <!-- Iterar registros de auditoría -->
+        <tr th:if="${#lists.isEmpty(audits)} and !${auditError}">
+            <td colspan="4" class="text-center">No hay registros de auditoría.</td>
+        </tr>
         <tr th:each="audit : ${audits}">
             <td th:text="${audit.date}">2025-08-17</td>
             <td th:text="${audit.user}">usuario</td>
